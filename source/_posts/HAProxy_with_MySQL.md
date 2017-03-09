@@ -1,5 +1,5 @@
 ---
-title: HAProxy_with_MySQL
+title: 架构学习之HAProxy
 date: 20167-3-9 18:54:41
 tags:
 - HAProxy
