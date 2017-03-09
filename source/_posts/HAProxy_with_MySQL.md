@@ -45,7 +45,9 @@ HAProxy将后端服务器产生的session和后端服务器识别在HAProxy中�
 
 **配置指令例举** ``appsession JSESSIONID len 64 timeout 5h request-learn``
 
-### #vi /usr/local/haproxy/haproxy.cfg
+### 配置示例
+
+ **#vi /usr/local/haproxy/haproxy.cfg**
 	
 	backend COOKIE_srv
 	mode http
