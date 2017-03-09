@@ -4,7 +4,7 @@ date: 20167-3-9 18:54:41
 tags:
 - HAProxy
 - MySQL
-- 读写分离
+- 架构学习
 ---
 
 
@@ -28,14 +28,14 @@ HAProxy附在均衡保持客户端和服务器Session亲缘性的三种方式：
 
 HAProxy将用户IP经过hash计算后指定到固定的真实机器上（类似于Nginx的IP hash指令）
 
-**配置指令** `` *balance source* ``
+**配置指令** `` balance source ``
 
 
 ### 2、cookie识别
 
 HAProxy将WEB服务端发送给客户端的cookie中插入（或添加前缀）HAProxy定义的后端的服务器COOKIE ID。
 
-**配置指令例举** ``*cookie SESSION_COOKIE insert indirect nocache*``
+**配置指令例举** ``cookie SESSION_COOKIE insert indirect nocache``
 
 用Firebug可以观察到用户的请求头的cookie里 有类似“Cookie jessionid＝xxxxxxx; SESSION_COOKIE=app1”其中SESSION_COOKIE就是HAProxy添加的内容。
 
@@ -43,7 +43,7 @@ HAProxy将WEB服务端发送给客户端的cookie中插入（或添加前缀）H
 
 HAProxy将后端服务器产生的session和后端服务器识别在HAProxy中的一张表里。客户端请求时先查询这张表。
 
-**配置指令例举** ``*appsession JSESSIONID len 64 timeout 5h request-learn*``
+**配置指令例举** ``appsession JSESSIONID len 64 timeout 5h request-learn``
 
 ### #vi /usr/local/haproxy/haproxy.cfg
 	
