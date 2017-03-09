@@ -8,7 +8,7 @@ tags:
 ---
 
 
-##HAProxy 简介
+## HAProxy 简介
 
 HAProxy是一个使用c语言编写的自由及开放源代码的软件，提供高可用性、负载均衡，以及基于TCP和HTTP的应用程序代理。
 
@@ -20,18 +20,18 @@ HAProxy实现了一种事件驱动，单一进程模型，此模型支持非常�
 
 <br>
 
-##配置HAProxy Session 亲缘性的三种方式
+## 配置HAProxy Session 亲缘性的三种方式
 
 HAProxy附在均衡保持客户端和服务器Session亲缘性的三种方式：
 
-###1、用户IP识别**
+### 1、用户IP识别
 
 HAProxy将用户IP经过hash计算后指定到固定的真实机器上（类似于Nginx的IP hash指令）
 
-**配置指令** ``*balance source*``
+**配置指令** `` *balance source* ``
 
 
-###2、cookie识别
+### 2、cookie识别
 
 HAProxy将WEB服务端发送给客户端的cookie中插入（或添加前缀）HAProxy定义的后端的服务器COOKIE ID。
 
