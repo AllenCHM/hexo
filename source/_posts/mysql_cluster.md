@@ -176,21 +176,21 @@ ok，以上内容会写入，master.info文件中
 
 可以通过以下几中方法来克隆一个slave：
 
-&emsp;&emsp;(1)冷拷贝(cold copy)   停止master，将master的文件拷贝到slave；然后重启master。缺点很明显。
+&emsp;&emsp;(1)**冷拷贝(cold copy)**   停止master，将master的文件拷贝到slave；然后重启master。缺点很明显。
 
-&emsp;&emsp;(2)热拷贝(warm copy)  如果你仅使用MyISAM表，你可以使用mysqlhotcopy拷贝，即使服务器正在运行。
+&emsp;&emsp;(2)**热拷贝(warm copy)**  如果你仅使用MyISAM表，你可以使用mysqlhotcopy拷贝，即使服务器正在运行。
 
-&emsp;&emsp;(3)使用mysqldump  使用mysqldump来得到一个数据快照可分为以下几步：
+&emsp;&emsp;(3)**使用mysqldump**  使用mysqldump来得到一个数据快照可分为以下几步：
 
-&emsp;&emsp;&emsp;<1>锁表：如果你还没有锁表，你应该对表加锁，防止其它连接修改数据库，否则，你得到的数据可以是不一致的。如下：
+&emsp;&emsp;&emsp;&emsp;<1>**锁表**：如果你还没有锁表，你应该对表加锁，防止其它连接修改数据库，否则，你得到的数据可以是不一致的。如下：
 ```
-     mysql> FLUSH TABLES WITH READ LOCK;
+&emsp;&emsp;&emsp;&emsp;mysql> FLUSH TABLES WITH READ LOCK;
 ```
-&emsp;&emsp;&emsp;<2>在另一个连接用mysqldump创建一个你想进行复制的数据库的转储：
+&emsp;&emsp;&emsp;&emsp;<2>*在另一个连接用mysqldump创建一个你想进行复制的数据库的转储*：
 ```
-        shell> mysqldump --all-databases --lock-all-tables >dbdump.db
+&emsp;&emsp;&emsp;&emsp;shell> mysqldump --all-databases --lock-all-tables >dbdump.db
 ```
-&emsp;&emsp;&emsp;&emsp;<3>对表释放锁。
+&emsp;&emsp;&emsp;&emsp;<3>**对表释放锁**。
 ```
-    mysql> UNLOCK TABLES;
+&emsp;&emsp;&emsp;&emsp;mysql> UNLOCK TABLES;
 ```
