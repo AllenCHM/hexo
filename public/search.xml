@@ -1,0 +1,210 @@
+<?xml version="1.0" encoding="utf-8"?>
+<search>
+  
+    
+    <entry>
+      <title><![CDATA[架构学习之MySQL主从结构]]></title>
+      <url>%2F2017%2F03%2F10%2Fmysql_cluster%2F</url>
+      <content type="text"><![CDATA[Mysql 主从架构MySQL主从同步搭建主库设置IP：192.168.0.33 编辑/etc/my.cnf 文件打开log-bin # vim /etc/my.cnf log-bin=/application/mysql/data/mysql.bin server-id=1 使用命令查看：log_bin应为on状态 [root@mysql-master-w ~]# mysql -uroot -p123456 -e &quot;show variables like &apos;log_bin&apos;;&quot; Variable_name Value log_bin ON [root@mysql-master-w ~]# mysql -uroot -p123456 -e &quot;show variables like &apos;server_id&apos;;&quot; Variable_name Value server_id 1 授权可同步用户，登录mysql操作： [root@mysql-master-w ~]# grant replication slave on *.* to &apos;rep&apos;@&apos;192.168.0.%&apos; identified by &apos;123456&apos;; 用户rep，在192.168.0.0/24的所有计算机，密码是123456 select user,host from mysql.user;##查看用户,确保上述添加授权用户正确。 锁表： flushtables with read lock; ##登录mysql操作 导出数据： mysqldump -uroot -poldboy123 -B-A --events|gzip&gt;/opt/new.sql.gz 到时候将new.sql.gz推到从库服务器。 解锁： unlock tables;##mysql中操作 记下文件名，和位置信息 mysql&gt; show master status; File Position Binlog_Do_DB Binlog_Ignore_DB mysql-bin.000002 412 从库设置服务器ip：192.168.0.34 修改/etc/my.cnf中的server-id=2，切忌不能与主库中的id相同。 将主库备份数据new.sql.gz导入数据库： gzip -d new.sql.gz mysql -uroot -p123456 &lt;new.sql 将以下内容在从库中执行： CHANGE MASTER TO MASTER_HOST=&apos;192.168.0.33&apos;, MASTER_PORT=3306, MASTER_USER=&apos;rep&apos;, MASTER_PASSWORD=&apos;123456&apos;, MASTER_LOG_FILE=&apos;mysql-bin.000002&apos;,####此处内容，同主库show master status; MASTER_LOG_POS=412;##主库show master status；的Position信息 ok，以上内容会写入，master.info文件中 在数据库中执行： slave start； ##执行同步开关 show slave status\G ##查看数据库是否同步 如果信息中有如下，两个yes，一个0，即表示 成功。 Slave_IO_Running: Yes Slave_SQL_Running:Yes Seconds_Behind_Master:0 以上是主从同步的全部过程。 可在主库中创建或更新数据库或表，在从库中查看是否有变化，以达到测试到目的。]]></content>
+    </entry>
+
+    
+    <entry>
+      <title><![CDATA[运维积累之Mac SSH 连接掉线]]></title>
+      <url>%2F2017%2F03%2F10%2Flinux-ssh%2F</url>
+      <content type="text"><![CDATA[问题描述用SSH过程连接电脑时，经常遇到长时间不操作而被服务器踢出的情况，常见的提示如： Write failed: Broken pipe 这是因为如果有一段时间在SSH连接上无数据传输，连接就会断开。解决此问题有两种方法。 方案一：在客户端设置方法很简单，只需在客户端电脑上编辑（需要root权限）/etc/ssh/ssh_config，并添加如下一行： ServerAliveInterval 60 此后该系统里的用户连接SSH时，每60秒会发一个KeepAlive请求，避免被踢。 方案二：在服务器端设置如果有相应的权限，也可以在服务器端设置，即编辑/etc/ssh/sshd_config，并添加： ClientAliveInterval 60 重启SSH服务器后该项设置会生效。每一个连接到此服务器上的客户端都会受其影响。应注意启用该功能后，安全性会有一定下降]]></content>
+    </entry>
+
+    
+    <entry>
+      <title><![CDATA[架构学习之HAProxy]]></title>
+      <url>%2F2017%2F03%2F10%2FHAProxy_with_MySQL%2F</url>
+      <content type="text"><![CDATA[HAProxy 简介HAProxy是一个使用c语言编写的自由及开放源代码的软件，提供高可用性、负载均衡，以及基于TCP和HTTP的应用程序代理。 HAProxy支持会话保持及七层处理，所以特别适合负载大的web站点。可以支持数以万计的并发连接。并且它的运行模式使得它可以简单安全的整合进当前的框架中，同时可以保护web服务器不被暴露到网络上。 HAProxy实现了一种事件驱动，单一进程模型，此模型支持非常大的并发连接数。多进程或多行程模型内受内存限制、系统调度器限制以及无处不在的锁限制，很少能处理数千并发连接。事件驱动模型因为在有更好的资源和时间管理的用户空间（User－Space）实现所有这些任务，所以没有这些问题。此模型的弊端是，在多核系统上，这些程序通常扩展性较差。这就是为什么他们必须进行优化以使每个CPU时间片(Cycle)做更多的工作。 包括GitHub、Bitbucket、Stack Overflow、Reddit、Tumblr、Twitter及亚马逊网络服务都在使用HAProxy。 配置HAProxy Session 亲缘性的三种方式HAProxy附在均衡保持客户端和服务器Session亲缘性的三种方式： 1、用户IP识别HAProxy将用户IP经过hash计算后指定到固定的真实机器上（类似于Nginx的IP hash指令） 配置指令 balance source 2、cookie识别HAProxy将WEB服务端发送给客户端的cookie中插入（或添加前缀）HAProxy定义的后端的服务器COOKIE ID。 配置指令例举 cookie SESSION_COOKIE insert indirect nocache 用Firebug可以观察到用户的请求头的cookie里 有类似“Cookie jessionid＝xxxxxxx; SESSION_COOKIE=app1”其中SESSION_COOKIE就是HAProxy添加的内容。 3、session识别HAProxy将后端服务器产生的session和后端服务器识别在HAProxy中的一张表里。客户端请求时先查询这张表。 配置指令例举 appsession JSESSIONID len 64 timeout 5h request-learn 配置示例 #vi /usr/local/haproxy/haproxy.cfg backend COOKIE_srv mode http cookie SESSION_COOKIE insert indirect nocache server REALsrv_70 184.82.239.70:80 cookie 11 check inter 1500 rise 3 fall 3 weight 1 server REALsrv_120 220.162.237.120:80 cookie 12 check inter 1500 rise 3 fall 3 weight 1 backend SOURCE_srv mode http balance source server REALsrv_70 184.82.239.70:80 cookie 11 check inter 1500 rise 3 fall 3 weight 1 server REALsrv_120 220.162.237.120:80 cookie 12 check inter 1500 rise 3 fall 3 weight 1 backend APPSESSION_srv mode http appsession JSESSIONID len 64 timeout 5h request-learn server REALsrv_70 184.82.239.70:80 cookie 11 check inter 1500 rise 3 fall 3 weight 1 server REALsrv_120 220.162.237.120:80 cookie 12 check inter 1500 rise 3 fall 3 weight 1]]></content>
+    </entry>
+
+    
+    <entry>
+      <title><![CDATA[读书笔记]]></title>
+      <url>%2F2016%2F12%2F10%2Fdushubiji%2F</url>
+      <content type="text"><![CDATA[《易中天“帝国与共和”三部曲》 一种制度得以诞生并表现出效能，必有诸多方面的原因：而一种新的制度要代替旧的制度并获得成功，也需要经济、社会、文化、历史许多方面的前提和条件。 专访饿了么张雪峰：未长夜痛哭者，不足以语人生 创业总结： （1）找到真正需求，而不是创造［伪需求] （2）先做出最小可用产品（MVP），然后根据市场反馈再定是继续迭代优化，还是迅速调整方向； （3）既然很多创业者只缺一个程序员，那就对你的程序员好一点，再好一点。刚开始创业，更需要 full-stack engineer，而不是各种 big title（研发总监、架构师、CTO）； （4）即使 full-stack engineer，也不是真的全能选手，所以，机房/网络/服务器/存储/监控/告警/安全甚至数据库什么的，可以考虑适当交给云计算。 架构： （1）低耦合（绝大部分架构师已熟知并实践），高内聚（不少架构师有可能忽视或无视）； （2）KISS； （3）Design for Failure； （4）Automation Everywhere； （5）SOLID/Elemental Design Patterns/Design Patterns（三者类似，归为一类，后两者都有同名书出版，尤其中间的 EDP更是把软件抽象做到了极致）。 CTO职能： 找到合适人才； 组建合理团队； 稳定交付产品； 极致经营产品； 如何让团队continuously enjoy woking and result？如果无法让团队始终充满激情，不可能有持续极致成果。 我自找的，开除我吧 “不论情况有多糟糕，哪怕你知道自己要被炒鱿鱼，也要沉着冷静地想办法把问题解决。作为IT部门，如果出了问题，其他部门的人就无法工作了。把眼泪留到问题解决后再流。” 游戏改变世界：游戏化如何让现实变得更美好 (简·麦格尼格尔) 玩游戏，就是自愿尝试克服种种不必要的障碍。 没有任何借口 2 (施伟德) 这个世界上有理想的人远远多过没有理想的人，可真正实现理想的人却是非常少。 好逸恶劳和推卸责任是人天性中的弱点，任何一个人在面对挫折和失败的时候内心都会本能地充满矛盾，并为面临的挫折和失败而深感纠结 贝多芬不是空谈派，不会因为自己耳聋就为自己找借口，因此他能扼住命运的喉咙，奏响生命交响曲；霍金从来不会因为自己坐在轮椅上为自己找借口，因此他完成了连常人也无法完成的奇迹；三毛的沙漠之行不是空谈，因此她写出了《撒哈拉的故事》 “丰碑无语，行胜于言” 平凡的人之所以一无所成，就是因为他们太容易满足而不思进取， 如果一个人自以为已经有了许多成就而止步不前，那么他的失败就在眼前了。许多人开始奋斗时十分起劲，但前途稍露光明后便自鸣得意起来，于是失败很可能立刻接踵而来 灵感的每一次闪烁和启示都让它像气体一样溜掉而毫无踪迹，这比丧失机遇还要糟糕，因为它在无形中阻断了激情喷发的正常渠道。如此一来，人类将无法聚起一股坚定而快速应变的力量以对付生活的突变。 如果只把工作当做一件差事，或者只将目光停留在工作本身，那么即使从事你最喜欢的工作，也依然无法持久地保持对工作的激情；如果把工作当做一项事业来看待，情况就会完全不同。 公司是我们共同的船，只要我们登上公司之船，我们的命运就和这艘船捆绑在一起了。一荣俱荣，一损俱损！这艘船就是我们共同的船，船的命运就是我们的命运，船的未来就是我们的未来 一个企业需要严格的执行力，如果你想经营出色，就必须使每一项最基本的工作都尽善尽美。 但只要你决定留下来，就应该与公司建立深厚的感情。把它当做自己的公司，全力投入。只要需要，即便承受再大的委屈也要服从集体。 在现今这个竞争社会里，在一个企业里要么全心全意地工作，然后等待升职加薪；要么就被时代的潮流吞没，等待随时被取代和被淘汰的命运。 你愿意当一个忍受较低的薪水待遇并甘心为自己的工作赴汤蹈火的小职员吗？ 一个员工回馈和感恩公司不一定需要大恩大德，感恩是一种态度，是一种对公司产生深厚感情的体现，以及一种对工作认真负责的体现。 有关纪律在庞大的组织中的作用，军队也许是最好的例证。每一天准时开始，一切都井然有序，所有的武器随时都保持清洁。事实上，士兵所接受的第1项训练就是纪律。原因很简单，在战场上严谨的纪律是制胜的关键；在商场上纪律同样重要。 成功不是追求得来的，而是被改变后的自己主动吸引而来 你若不想做，会找到一个借口；你若想做，会找到一种方法. 把握今日等于拥有两倍的明日。 在发展过程中一个公司就如同一艘驶往成功码头的大型蒸汽船，操纵这艘船扬帆起航不仅仅需要大量的财力和物力，更需要一个敢于乘风破浪的船长和一群忠于船长、忠于这条船的水手。]]></content>
+    </entry>
+
+    
+    <entry>
+      <title><![CDATA[《水浒传》读书笔记之108将出场描述]]></title>
+      <url>%2F2016%2F12%2F10%2Fshuihu%2F</url>
+      <content type="text"></content>
+    </entry>
+
+    
+    <entry>
+      <title><![CDATA[flask相关第三方库]]></title>
+      <url>%2F2016%2F11%2F08%2Fflask-package%2F</url>
+      <content type="text"><![CDATA[Flask-ACL描述：Flask的访问控制列表 Flask-API描述：基于Flask的web浏览器RESTful API测试工具 Flask-APIForm描述：在Flask中用于RESTful APIs 的表单验证 Flask-APScheduler描述：基于Flask的定时任务框架 Flask-AYAH描述：Are You A Human 验证码机制 Flask-Access描述：Flask视图访问限制 Flask-Actions描述：Flask的常用动作，便于管理应用 Flask-ActiveRecord描述：用于对Flask-SQLAlchemy模型进行一些保护 Flask-Admin描述：仿Django-admin做的Flask应用Admin管理接口 Flask-Alchemy描述：Flask-Alchemy是使用SQLAlchemy的declarative_base模式工作，支持数据库主从分离。比如发送select请求给从库。 Flask-AlchemyDumps描述：基于SQLAlchemy和Flask-Script，通过FTP或者保存本地的数据库备份]]></content>
+    </entry>
+
+    
+    <entry>
+      <title><![CDATA[微服务若干感想]]></title>
+      <url>%2F2016%2F10%2F31%2Fmicro-service%2F</url>
+      <content type="text"><![CDATA[规则对于智者来说是指导，对于愚蠢来说是遵从。 突破性创新，是以用户价值为中心的。 快速交付是团队协作高效的根本。]]></content>
+    </entry>
+
+    
+    <entry>
+      <title><![CDATA[sqlalchemy错误集]]></title>
+      <url>%2F2016%2F10%2F27%2Fsqlalchemy-error%2F</url>
+      <content type="text"><![CDATA[1、sqlachemy中批量删除的问题 db.session.query(Post).filter(Post.id.in_(ids)).delete() 报错： sqlalchemy.exc.InvalidRequestError 原因： 删除记录时，默认会尝试删除 session 中符合条件的对象，而 in 操作估计还不支持，于是就出错了。解决办法就是删除时不进行同步，然后再让 session 里的所有实体都过期： 解决办法： session.query(User).filter(User.id.in_((1, 2, 3))).delete(synchronize_session=False)session.commit() # or session.expire_all() update操作也有同样的参数，如果后面立刻提交了，那么加上synchronize_session=False参数会更快]]></content>
+    </entry>
+
+    
+    <entry>
+      <title><![CDATA[ubuntu server 设置时间]]></title>
+      <url>%2F2016%2F10%2F27%2Flinux-time%2F</url>
+      <content type="text"><![CDATA[查看当前电脑时区： data -R 设置方法： 1、运行tzselect 选择Asia，再选China，最后选择Beijing 2、复制文件到/etc目录下 cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime 3、更新时间 ntpdate time.windows.com]]></content>
+    </entry>
+
+    
+    <entry>
+      <title><![CDATA[ubuntu网络相关]]></title>
+      <url>%2F2016%2F10%2F26%2Flinux-network-tool%2F</url>
+      <content type="text"><![CDATA[在ubuntu中已测试 静态路由配置编辑文件/etc/network/interfaces auto eth0 iface eth0 inet static address 192.168.0.209 netmask 255.255.255.0 gateway 192.168.0.1 临时DNS配置编辑文件/etc/resolv.conf nameserver 192.168.0.1 永久DNS编辑文件 /etc/resolvconf/resolv.conf.d/base nameserver 192.168.0.1]]></content>
+    </entry>
+
+    
+    <entry>
+      <title><![CDATA[《孙子兵法》]]></title>
+      <url>%2F2016%2F10%2F25%2Fsunzibingfa%2F</url>
+      <content type="text"><![CDATA[计篇孙子曰：兵者，国之大事，生死之地，存亡之道，不可不察也。 故经之以五事，校之以计而索其情：一曰道，二曰天，三曰地，四曰将，五曰法。道者，令民与上同意也，故可以与之死，可以与之生，而不畏危。天者，阴阳、寒暑、时制也。地者，远近，险易、广狭、死生也。将者，智、信、仁、勇、严也。法者，曲制、官道、主用也。凡此五者，将莫不闻，知之者胜，不知者不胜。故校之以计而索其情，曰：主孰有道？将孰有能？天地孰得？法令孰行？兵众孰强？士卒孰练？赏罚孰明？吾以此知胜负矣。 将听吾计，用之必胜，留之；将不听吾计，用之必败，去之。 计利以听，乃为之势，以佐其外。势者，因利而制权也。兵者，诡道也。故能而示之不能，用而示之不用，近而示之远，远而示之近；利而诱之，乱而取之，实而备之，强而避之，怒而挠之，卑而骄之，佚而劳之，亲而离之。攻其无备，出其不意。此兵家之胜，不可先传也。 夫未战而庙算胜者，得算多也；未战而庙算不胜者，得算少也。得算胜，少算不胜，而况于无算乎！吾以此观之，胜负见矣。 作战篇 孙子曰：凡用兵之法，驰车千驷，革车千乘，带甲十万，千里馈粮。则内外之费，宾客之用，胶漆之材，车甲之奉，日费千金，然后十万之师举矣。 其用战也胜，久则钝兵挫锐，攻城则力屈，久暴师则国用不足。夫钝兵挫锐，屈力殚货，则诸侯乘其弊而起，虽有智者不能善其后矣。故兵闻拙速，未睹巧之久也。夫兵久而国利者，未之有也。故不尽知用兵之害者，则不能尽知兵之利也。 善用兵者，役不再籍，粮不三载，取用于国，因粮于敌，故军食可足也。国之贫于师者远输，远输则百姓贫；近师者贵卖，贵卖则百姓才竭，财竭则急于丘役。力屈、财殚，中原、内虚于家，百姓之费，十去其七；公家之费，破军罢马，甲胄矢弓，戟盾矛橹，丘牛大车，十去其六。故智将务食于敌，食敌一钟，当吾二十钟；萁杆一石，当吾二十石。故杀敌者，怒也；取敌之利者，货也。车战得车十乘以上，赏其先得者而更其旌旗。车杂而乘之，卒善而养之，是谓胜敌而益强。 故兵贵胜，不贵久。 故知兵之将，民之司命。国家安危之主也。]]></content>
+    </entry>
+
+    
+    <entry>
+      <title><![CDATA[python中的property装饰器用法]]></title>
+      <url>%2F2016%2F10%2F24%2Fpython-property%2F</url>
+      <content type="text"><![CDATA[@property装饰器负责把一个方法变成属性调用。把一个getter方法变成属性，只需要加上@property就可以了，此时@property本身又创建了另一个装饰器@score.setter，负责把一个setter方法变成属性赋值。 class Student(object): @property def score(self): return self._score @score.setter def score(self, value): if not isinstance(value, int): raise ValueError(&quot;score must be an integer!&quot;) if value &lt; 0 or value &gt; 100: raise ValueError(&quot;score must between 0~100&quot;) self._score = value 使用方法： &gt;&gt;&gt; s = Student() &gt;&gt;&gt; s.score = 30 &gt;&gt;&gt; s.score 30 &gt;&gt;&gt; s.score = 9999 ValueError: score must between 0~100 这就意味着如果只定义getter方法，不定义setter方法就是一个只读属性 对于其它property应用使用dir(property查看)]]></content>
+    </entry>
+
+    
+    <entry>
+      <title><![CDATA[flask开发过程中的用户认证]]></title>
+      <url>%2F2016%2F10%2F24%2Fflask-user-manager%2F</url>
+      <content type="text"><![CDATA[常用的第三方包Flask-Login:管理已登录用户的用户会话Werkzeug: 计算密码散列值并进行核对itsdangerous: 生成并核对加密安全令牌Flask-Mail:发送与认证相关的电子邮件Flask-Bootstrap:Html模板Flask-WTF：Web表单 如何确保数据库中的密码安全 若想保证数据库中用户密码的安全，关键在于不能存储密码本身，而要存储密码的散列值。 计算密码散列值的函数接收密码作为输入，使用一种或多种加密算法转换密码，最终得到一个和原始密码没有关系的字符序列。 核对密码时，密码散列值可替代原始密码，因为计算散列值的函数是可复现的：只要输入一样，结果就一样。 使用Werkzeug实现密码散列 generate_password_hash(password, method=pbkdf2:sha1, salt_length=8)以字符串形式输出密码的散列值。method和salt_length的默认值就能满足大多数需求。 check_password_hash(hash, password)比对密码散列值与用户输入的密码。返回值为True表明密码正确 from werkzeug.security import generate_password_hash, check_password_hash class User(db.Model): #。。。 password_hash = db.Column(db.String(128)) @property def password(self): raise AttributeError(&apos;password is not a readable attribute&apos;) @password.setter def password(self, password): self.password_hash = generate_password_hash(password) def verify_password(self, password): return check_password_hash(self.password_hash, password) 使用Flask-login认证用户flask-login 是专门用来管理用户认证系统中的认证状态，且不依赖特定的认证机制。 如果想使用flask-login, User模型必须实现几个方法，如下：is_authenticated(): 如果用户已经登录，必须返回True,否则返回Falseis_active(): 如果允许用户登录，必须返回true，否则返回false，如果要禁用账户，可以返回falseis_anonymous() 对普通用户必须返回Falseget_id() 必须返回用户的唯一标识符，使用Unicode编码字符串 也可以使用flask-login中的UserMixin类，该类包含了这些方法的默认实现，且能满足大多数雪球。 from flask.ext.login import UserMixin class User(UserMixin, db.Model): __tablename__ = u&apos;users&apos; email = db.Column(db.String(64), unique=True, index=True) Flask-login在程序的工厂函数中初始化： from flask.ext.login import LoginManager login_manager = LoginManager() login_manager.session_protection = &apos;strong&apos; login_manager.login_view = &apos;auth.login&apos; def create_app(config_name): login_manager.init_app(app) LoginManager对象的session_protection属性可以设为None， ‘basic’或’strong’，以提供不同等级的安全等级防止用户会话遭修改。设为’strong’时，Flask-Login会记录客户端IP地址和浏览器的用户代理信息，如果发现异动就登出用户。login_view属性设置登录页面的端点。 最后，flask-login要求程序实现一个回调函数，使用指定的标识符加载用户。app/models.py: 加载用户的回调函数 from . import login_manager @login_manager.user_loader def load_user(user_id): return User.query.get(int(user_id)) 加载用户的回调函数接收以Unicode字符串形式表示的用户标识符。如果能找到用户，这个函数必须返回用户对象；否则应该返回None。 未完待续]]></content>
+    </entry>
+
+    
+    <entry>
+      <title><![CDATA[linux命令使用技巧]]></title>
+      <url>%2F2016%2F10%2F23%2Flinux-command-wget%2F</url>
+      <content type="text"><![CDATA[代理模式 有时候需要下载国外插件，不得不使用代理模式 wget -e &quot;http_proxy=192.168.0.209:8080&quot; www.google.com 或者使用环境变量 http_proxy = &quot;http://username:password@192.168.0.209:8080&quot; export http_proxy curl 使用代理 curl -x 192.168.0.209:8080 http://www.baidu.com 检查nginx配置文件是否正确 nginx -t -c nginx.conf]]></content>
+    </entry>
+
+    
+    <entry>
+      <title><![CDATA[代理服务器项目摘要]]></title>
+      <url>%2F2016%2F10%2F21%2Fproxy-list%2F</url>
+      <content type="text"><![CDATA[网站设计：1、显示代理ip地址，地域，测试速度2、设置代理ip pool https://proxy.peuland.com/proxy_list_by_category.htm# http://proxy.mimvp.com/free.php http://ip.izmoney.com/ http://www.kuaidaili.com/ http://www.goubanjia.com/ http://www.xicidaili.com http://ip84.com/ http://www.mimiip.com/gngao/ 已实现http://www.ip-adress.com/proxy_list/?k=time&amp;d=deschttp://www.cybersyndrome.net/plr.htmhttp://www.cybersyndrome.net/pla.htmlhttp://proxy.ipcn.org/proxylist.htmlhttp://proxy.ipcn.org/proxylist2.htmlhttp://www.proxy360.cn/Region/Chinahttp://www.youdaili.net/Daili/guonei/http://cn-proxy.com/http://lab.magicvox.net/proxy/http://free-proxy-list.net/uk-proxy.htmlhttp://www.us-proxy.org/http://free-proxy-list.net/anonymous-proxy.htmlhttp://www.google-proxy.nethttps://proxy-list.org/english/index.php?p=1http://www.proxynova.com/proxy-server-list/country-aehttp://proxies.org/https://www.hide-my-ip.com/proxylist.shtmlhttp://ipaddress.com/proxy-list/]]></content>
+    </entry>
+
+    
+    <entry>
+      <title><![CDATA[hexo-seo]]></title>
+      <url>%2F2016%2F10%2F21%2Fhexo-seo%2F</url>
+      <content type="text"></content>
+    </entry>
+
+    
+    <entry>
+      <title><![CDATA[mysql远程登录问题]]></title>
+      <url>%2F2016%2F10%2F20%2Fmysql-errors%2F</url>
+      <content type="text"><![CDATA[root远程登录被拒绝解决方法1：1、使用命令进入mysql终端 mysql -u root -p 2、使用一下命令 mysql&gt; use mysql; mysql&gt; select host,user form user; (查看用户权限情况) mysql&gt; Grant all privileges on *.* to &apos;root&apos;@&apos;%&apos; identified by ‘password’with grant option; mysql&gt; flush privileges; (刷新权限)]]></content>
+    </entry>
+
+    
+    <entry>
+      <title><![CDATA[hexo技术]]></title>
+      <url>%2F2016%2F10%2F20%2Fhexo-tech%2F</url>
+      <content type="text"><![CDATA[1、Tag标签使用方法 tags: - 123 - 456 注意有空格]]></content>
+    </entry>
+
+    
+    <entry>
+      <title><![CDATA[python-data-framework]]></title>
+      <url>%2F2016%2F10%2F20%2Fpython-data-framework%2F</url>
+      <content type="text"><![CDATA[1、Bubbles Bublles是一个python的数据处理框架 2、pygrametl pygrametl，使用python实现的ETL工具框架 3、petl petl是一个纯python编写的ETL工具]]></content>
+    </entry>
+
+    
+    <entry>
+      <title><![CDATA[flask-views-decorator]]></title>
+      <url>%2F2016%2F10%2F20%2Fflask-views-decorator%2F</url>
+      <content type="text"><![CDATA[Flask中视图装饰器的应用1、用于过滤未登录用户 from functools import wraps from flask import g, request, redirect, url_for def login_required(f): @wraps(f) def decorated_function(*args, **kwargs): if g.user is None: return redirect(url_for(&apos;login&apos;, next=request.url)) return f(*args, **kwargs) return decorated_function #注意route装饰器应该在最外层 @app.route(&apos;/secret_page&apos;) @login_required def secret_page(): pass 2、用于缓存装饰器，缓存一些]]></content>
+    </entry>
+
+    
+    <entry>
+      <title><![CDATA[flask]]></title>
+      <url>%2F2016%2F10%2F20%2Fflask%2F</url>
+      <content type="text"><![CDATA[1、使用SQLAlchemy时，db.session.commit()之后对象会自动添加id。或者使用db.session.refresh(f)。暂时还不清楚refresh()是神马功能。 2、为flask的视图添加装饰器，必须使用warps. warps作用之一就是改变函数的name。 如果自定义装饰器不使用warps，那么使用装饰器后原本不同函数名字都变成了相同的名字，在flask中会造成函数名冲突。 AssertionError: View function mapping is overwriting an existing endpoint function 正确写法： def login_required(func): @wraps(func) def wrap(*args, **kwargs): courier_id = request.headers.get(&apos;X-ID&apos;) token = request.headers.get(&apos;X-TOKEN&apos;) if verify_login_token(int(courier_id), token): return func(*args, **kwargs) else: return response(ResponseCode.UNAUTHORIZED) return wrap 3、flask 在函数中添加异常捕捉失败 无法捕捉Exception传个的e，代码如下： def check_error(func): @wraps(func) def _check(*args, **kwargs): try: return func(*args, **kwargs) except Exception, e: return make_response(jsonify({ u&apos;error&apos;:1, u&apos;message&apos;:u&apos;有参数传错了。。。呼叫后台&apos;, })) return _check]]></content>
+    </entry>
+
+    
+    <entry>
+      <title><![CDATA[解决putty终端蓝色过深]]></title>
+      <url>%2F2016%2F10%2F19%2Fputty-blue%2F</url>
+      <content type="text"><![CDATA[解决putty 登录到linux上发现ls命令显示的目录蓝色太深看不清问题 方案一（暂时的）：在”window”中选择”Colours”,右边选择”ANSIBlue”颜色修改为84 84 254 方案二（长期）： 使用regedit命令打开注册表 找到HKEY_CURRENT_USER\Software\SimonTatham\PuTTY\Sessions中的保存的主机名 修改Colour14的值为84,84,254]]></content>
+    </entry>
+
+    
+    <entry>
+      <title><![CDATA[mysql-python安装错误]]></title>
+      <url>%2F2016%2F10%2F19%2Fmysql-python-error%2F</url>
+      <content type="text"><![CDATA[mysql-python 安装错误 在安装 mysql-python时，会出现： sh: mysql_config: not found Traceback (most recent call last): File &quot;setup.py&quot;, line 15, in &lt;module&gt; metadata, options = get_config() File &quot;/home/zhxia/apps/source/MySQL-python-1.2.3/setup_posix.py&quot;, line 43, in get_config libs = mysql_config(&quot;libs_r&quot;) File &quot;/home/zhxia/apps/source/MySQL-python-1.2.3/setup_posix.py&quot;, line 24, in mysql_config raise EnvironmentError(&quot;%s not found&quot; % (mysql_config.path,)) EnvironmentError: mysql_config not found 原因是没有安装libmysqlclient-dev apt-get install libmysqlclient-dev 一般到此为止再重复安装即可如若不行，继续往下 找到mysql_config文件的路径 sudo updatedb locate mysql_config mysql_config的位置为：/usr/bin/mysql_config 在mysql-python源码包中找到：setup_posix.py 文件 将mysql_config.path值改为：/usr/bin/mysql_config 然后 python setup.py install]]></content>
+    </entry>
+
+    
+    <entry>
+      <title><![CDATA[Sqlalchemy使用方法]]></title>
+      <url>%2F2016%2F10%2F19%2Fhow-to-Sqlalchemy%2F</url>
+      <content type="text"><![CDATA[Sqlalchemy 用法in用法 SELECT id, name FROM user WHERE id in (123,456) sqlalchemy解决方案： 方案1、 session.query(MyUserClass).filter(MyUserClass.id.in_((123, 234))).all() 方案2、 session.execute( select( [MyUserTable.c.id, MyUserTable.c.name], MyUserTable.c.id.in_((123, 234)) )).fetchall() 方案3、 myList = [123, 234] select = sqlalchemy.sql.select([user_table.c.id, user_table.c.name], user_table.c.id.in_(myList)) result = con.execute(select) for row in result: process(row)]]></content>
+    </entry>
+
+    
+    <entry>
+      <title><![CDATA[flask错误集合]]></title>
+      <url>%2F2016%2F10%2F19%2Fflask-error%2F</url>
+      <content type="text"><![CDATA[Flask错误集使用Flask-Migrate初始化数据库出错 python manage.py db init 错误内容: alembic.util.CommandError: Directory migrations already exists 原因: 提前创建了migrations文件夹 解决方法: 删除migrations文件夹即可 使用Flask-Migrate更新数据库不成功解决方法：先运行： python manage.py db migrate -m &quot;inital migration&quot; 在运行： python manage.py db upgrade alembic.util.exc.CommandError: Can’t locate revision identified by ‘b863c498c6e7’解决办法： 删除数据库中的alembic_version表，重新init]]></content>
+    </entry>
+
+    
+    <entry>
+      <title><![CDATA[scrapy-useragents]]></title>
+      <url>%2F2016%2F10%2F16%2Fscrapy-useragents%2F</url>
+      <content type="text"><![CDATA[scrapy-useragents这是scrapy的一个中间件。允许对每一个request请求设置随机的User-Agent。 ##配置创建一个文件，每行一条user－agent。可以通过nginx日志记录查找到user-agent。在nginx日志目录下面执行如下命令： egrep -h -o &apos;&quot;[^&quot;]+&quot; &quot;[^&quot;]+&quot;$&apos; * | cut -d &apos;&quot;&apos; -f 2 | sort -u &gt; user-agents.txt 可以通过USER_AGENTS_LIST_FILE来设置文件名 然后在middleware列表中添加它 DOWNLOADER_MIDDLEWARES = { #关闭默认的user agent中间件 &apos;scrapy.contrib.downloadermiddleware.useragent.UserAgnetMiddleware&apos;: None, &apos;scrapy_useragents.middleware.UserAgentMiddleware&apos;: 400, } -]]></content>
+    </entry>
+
+    
+    <entry>
+      <title><![CDATA[scrapy_webdriver]]></title>
+      <url>%2F2016%2F10%2F15%2Fscrapy-webdriver%2F</url>
+      <content type="text"><![CDATA[scrapy-webdriver使用selenium webdriver爬取 没有很好的测试，可能会有很多bug。 安装没有上传到pypi上，可以使用下面命令安装： pip installhttps://github.com/sosign/scrapy-webdriver/archive/master.zip 或者编写setup.py文件如下： setup( install_requires=[ &apos;scrapy_webdriver&apos;, ...., ], dependency_links = [ &apos;https://github.com/sosign/scrapy-webdriver/archive/master.zip&apos; ], ...., ) 配置在你的scrapy项目中添加如下设置： DOWNLOAD_HANDLERS = { &apos;http&apos;:&apos;scrapy_webdriver.download.WebdriverDownloadHandler&apos;, &apos;https&apos;:&apos;scrapy_webdriver.download.WebdriverDownloadHandler&apos;, } SPIDER_MIDDLEWARES = { &apos;scrapy_webdriver.middlewares.WebdrverSpiderMiddleware&apos;:543, } WEBDRIVER_BROWSER = &apos;PhantomJS&apos; #或者其它selenium.webdriver中的驱动 ＃或者你自定义的浏览器驱动&apos;your_package.CustomWebdriverClass&apos; #或者用一个实际类代替字符串 ＃浏览器驱动的配置 WEBDRIVER_OPTIONS = { &apos;service_args&apos;:[&apos;--debug=true&apos;, &apos;--load-images=false&apos;, &apos;--webdriver-loglevel=debug&apos;] } 使用为了使用webdriver来下载，需要使用类提供的scrapy_webdriver.http.WebdriverRequest代替以前的scrapy.Request from scrapy_webdrvier.http import WebdriverRequest yield WebdriverRequest(&apos;http://www.baidu.com&apos;) 可用的参数包括：method, body, headers, cookies]]></content>
+    </entry>
+
+    
+    <entry>
+      <title><![CDATA[random proxy middleware for scrapy(scracpy的随记代理中间件)]]></title>
+      <url>%2F2016%2F10%2F15%2Frandom-proxy-middleware-for-scrapy%2F</url>
+      <content type="text"><![CDATA[Random proxy middleware for scrapy(scrapy的随机代理中间件)在处理scrapy的requests时，使用随机的从代理ip列表中抽取一个使用， 避免ip被禁用，提高爬取速度。 可以通过 http://www.hidemyass.com获取代理ip列表 安装快速方法： pip install scrapy_proxies 或者下载源代码并运行： python setup.py install 设置#失败后重试次数 RETRY_TIMES = 10 #重试的错误码 RETRY_HTTP_CODES = [500, 503, 504, 400, 403, 404, 408] DOWNLOADER_MIDDLEWARES = { &apos;scrapy.downloadermiddlewares.retry.RetryMiddleware&apos;:90, &apos;scrapy_proxies.RandomProxy&apos;:100, &apos;scrapy.downloadermiddlewares.httpproxy.HttpProxyMiddleware&apos;:110, } PROXY_LIST = &apos;/path/to/proxy/list.text&apos; 注意对于scrapy老版本（1.0.0以前的版本）。需要使用scrapy.contrib.downloadermiddleware.retry.RetryMiddleware 和scrapy.contrib.downloadermiddleware.httpproxy.HttpProxyMiddleware 中间件代替 爬虫使用如果你设置了不过滤重复请求 dont_filter = True.在每一个回调中，返回得到目标页面，检查页面logo或者其它标志性元素。 if not hxs.select(&apos;//get/site/logo&apos;): yield Request(url=response.url, dont_filter=True)]]></content>
+    </entry>
+
+    
+    <entry>
+      <title><![CDATA[Flask-cookies使用教程]]></title>
+      <url>%2F2016%2F10%2F14%2Ftest%2F</url>
+      <content type="text"><![CDATA[Cookie介绍cookie以text文件的形式 被存放在用户的电脑上。目的是记住和跟踪用户使用数据，提高访问体验，做网站统计。 一个Request 对象包含了cookie属性。这是一个由cookie变量和对应的值组成的字典对象，客户端发送。除此以外cookie也可以保存它的过期时间，路径和站点域名。 在Flask中，cookies在response中设置。在一个视图函数中使用make_response()函数生成response对象返回。然后使用set_cookie()函数在response对象中存放cookie。 读取cookie很简单，使用get()方法从request.cookies属性中读取。 在下面的Flask应用中，打开’/‘页面的到一个简单的表单。123@app.route(&apos;/&apos;)def index(): return render_template(&apos;index.html&apos;) HTML页面包含一个text输入框123456789&lt;html&gt; &lt;body&gt; &lt;form action = &quot;/setcookie&quot; method=&quot;post&quot;&gt; &lt;p&gt;&lt;h3&gt;Enter userID&lt;/h3&gt;&lt;/p&gt; &lt;p&gt;&lt;input type =&apos;text&apos; name=&apos;nm&apos; /&gt;&lt;/p&gt; &lt;p&gt;&lt;input type=&apos;submit&apos; value=&apos;login&apos; /&gt;&lt;/p&gt; &lt;/form&gt; &lt;/body&gt;&lt;/html&gt; 这个form表单提交到’/setcookie’链接， 相关的视图函数将设置一个cookie名称为userID， 重新加载其它页面。1234567@app.route(&apos;/setcookie&apos;, methods=[&apos;post&apos;, &apos;get&apos;])def setcookie(): if request.method == &quot;POST&quot;: user = request.form[u&apos;nm&apos;] resp = make_response(render_template(&apos;readcookie.html&apos;)) resp.set_cookie(&apos;userID&apos;, user) return resp ‘readcookie.html’包含了一个超级链接，指向getcookie()视图函数。getcookie()读取和显示cookie值。1234@app.route(&apos;/getcookie&apos;)def getcookie(): name = request.cookies.get(&apos;userID&apos;) return &apos;&lt;h1&gt; welcome&apos; + name + &apos;&lt;/h1&gt;&apos;]]></content>
+    </entry>
+
+    
+  
+  
+</search>

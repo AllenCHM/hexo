@@ -1,0 +1,882 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>逼格大塔</title>
+  <subtitle>我们虽采集的只是石头，却必须时刻展望未来的大教堂</subtitle>
+  <link href="/atom.xml" rel="self"/>
+  
+  <link href="http://www.bigdatas.top/"/>
+  <updated>2017-03-10T02:08:50.160Z</updated>
+  <id>http://www.bigdatas.top/</id>
+  
+  <author>
+    <name>Allen</name>
+    
+  </author>
+  
+  <generator uri="http://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>架构学习之MySQL主从结构</title>
+    <link href="http://www.bigdatas.top/2017/03/10/mysql_cluster/"/>
+    <id>http://www.bigdatas.top/2017/03/10/mysql_cluster/</id>
+    <published>2017-03-10T01:54:41.000Z</published>
+    <updated>2017-03-10T02:08:50.160Z</updated>
+    
+    <content type="html"><![CDATA[<h2 id="mysql-主从架构"><a href="#Mysql-主从架构" class="headerlink" title="Mysql 主从架构"></a>Mysql 主从架构</h2><h2 id="mysql主从同步搭建"><a href="#MySQL主从同步搭建" class="headerlink" title="MySQL主从同步搭建"></a>MySQL主从同步搭建</h2><h3 id="主库设置"><a href="#主库设置" class="headerlink" title="主库设置"></a>主库设置</h3><p>IP：192.168.0.33</p>
+<p>编辑/etc/my.cnf 文件打开log-bin</p>
+<pre><code># vim /etc/my.cnf
+
+    log-bin=/application/mysql/data/mysql.bin
+    server-id=1
+</code></pre><p>使用命令查看：log_bin应为on状态</p>
+<pre><code>[root@mysql-master-w ~]# mysql -uroot -p123456 -e &quot;show variables like &apos;log_bin&apos;;&quot;
+</code></pre><table>
+<thead>
+<tr>
+<th>Variable_name</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>log_bin</td>
+<td>ON</td>
+</tr>
+</tbody>
+</table>
+<pre><code>[root@mysql-master-w ~]# mysql -uroot -p123456 -e &quot;show variables like &apos;server_id&apos;;&quot;
+</code></pre><table>
+<thead>
+<tr>
+<th>Variable_name</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>server_id</td>
+<td>1</td>
+</tr>
+</tbody>
+</table>
+<p>授权可同步用户，登录mysql操作：</p>
+<pre><code>[root@mysql-master-w ~]# grant replication slave on *.* to &apos;rep&apos;@&apos;192.168.0.%&apos; identified by &apos;123456&apos;;
+</code></pre><p>用户rep，在192.168.0.0/24的所有计算机，密码是123456</p>
+<pre><code>select user,host from mysql.user;##查看用户,确保上述添加授权用户正确。
+</code></pre><p>锁表：</p>
+<pre><code>flushtables with read lock; ##登录mysql操作
+</code></pre><p>导出数据：</p>
+<pre><code>mysqldump -uroot -poldboy123 -B-A --events|gzip&gt;/opt/new.sql.gz
+</code></pre><p>到时候将new.sql.gz推到从库服务器。</p>
+<p>解锁：</p>
+<pre><code>unlock tables;##mysql中操作
+</code></pre><p>记下文件名，和位置信息</p>
+<pre><code>mysql&gt; show master status;
+</code></pre><table>
+<thead>
+<tr>
+<th>File</th>
+<th>Position</th>
+<th>Binlog_Do_DB</th>
+<th>Binlog_Ignore_DB</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>mysql-bin.000002</td>
+<td>412</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h3 id="从库设置"><a href="#从库设置" class="headerlink" title="从库设置"></a>从库设置</h3><p>服务器ip：192.168.0.34</p>
+<p>修改/etc/my.cnf中的server-id=2，切忌不能与主库中的id相同。</p>
+<p>将主库备份数据new.sql.gz导入数据库：</p>
+<pre><code>gzip -d new.sql.gz
+
+mysql -uroot -p123456 &lt;new.sql
+</code></pre><p>将以下内容在从库中执行：</p>
+<pre><code>CHANGE MASTER TO
+MASTER_HOST=&apos;192.168.0.33&apos;,
+MASTER_PORT=3306,
+MASTER_USER=&apos;rep&apos;,
+MASTER_PASSWORD=&apos;123456&apos;,
+MASTER_LOG_FILE=&apos;mysql-bin.000002&apos;,####此处内容，同主库show master status;
+MASTER_LOG_POS=412;##主库show master status；的Position信息
+</code></pre><p>ok，以上内容会写入，master.info文件中</p>
+<p>在数据库中执行：</p>
+<pre><code>slave start； ##执行同步开关
+show slave status\G ##查看数据库是否同步
+</code></pre><p>如果信息中有如下，两个yes，一个0，即表示 成功。</p>
+<pre><code>Slave_IO_Running: Yes
+Slave_SQL_Running:Yes
+Seconds_Behind_Master:0
+</code></pre><p>以上是主从同步的全部过程。</p>
+<p>可在主库中创建或更新数据库或表，在从库中查看是否有变化，以达到测试到目的。</p>
+]]></content>
+    
+    <summary type="html">
+    
+      &lt;h2 id=&quot;mysql-主从架构&quot;&gt;&lt;a href=&quot;#Mysql-主从架构&quot; class=&quot;headerlink&quot; title=&quot;Mysql 主从架构&quot;&gt;&lt;/a&gt;Mysql 主从架构&lt;/h2&gt;&lt;h2 id=&quot;mysql主从同步搭建&quot;&gt;&lt;a href=&quot;#MySQL主从同步搭
+    
+    </summary>
+    
+      <category term="系统架构" scheme="http://www.bigdatas.top/categories/%E7%B3%BB%E7%BB%9F%E6%9E%B6%E6%9E%84/"/>
+    
+    
+      <category term="MySQL" scheme="http://www.bigdatas.top/tags/MySQL/"/>
+    
+      <category term="架构学习" scheme="http://www.bigdatas.top/tags/%E6%9E%B6%E6%9E%84%E5%AD%A6%E4%B9%A0/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>运维积累之Mac SSH 连接掉线</title>
+    <link href="http://www.bigdatas.top/2017/03/10/linux-ssh/"/>
+    <id>http://www.bigdatas.top/2017/03/10/linux-ssh/</id>
+    <published>2017-03-09T22:24:09.000Z</published>
+    <updated>2017-03-09T22:34:17.987Z</updated>
+    
+    <content type="html"><![CDATA[<h2 id="问题描述"><a href="#问题描述" class="headerlink" title="问题描述"></a>问题描述</h2><p>用SSH过程连接电脑时，经常遇到长时间不操作而被服务器踢出的情况，常见的提示如：</p>
+<pre><code>Write failed: Broken pipe
+</code></pre><p>这是因为如果有一段时间在SSH连接上无数据传输，连接就会断开。解决此问题有两种方法。</p>
+<h2 id="方案一在客户端设置"><a href="#方案一：在客户端设置" class="headerlink" title="方案一：在客户端设置"></a>方案一：在客户端设置</h2><p>方法很简单，只需在客户端电脑上编辑（需要root权限）<strong>/etc/ssh/ssh_config</strong>，并添加如下一行：</p>
+<pre><code>ServerAliveInterval 60
+</code></pre><p>此后该系统里的用户连接SSH时，每60秒会发一个KeepAlive请求，避免被踢。</p>
+<h2 id="方案二在服务器端设置"><a href="#方案二：在服务器端设置" class="headerlink" title="方案二：在服务器端设置"></a>方案二：在服务器端设置</h2><p>如果有相应的权限，也可以在服务器端设置，即编辑<strong>/etc/ssh/sshd_config</strong>，并添加：</p>
+<pre><code>ClientAliveInterval 60
+</code></pre><p>重启SSH服务器后该项设置会生效。每一个连接到此服务器上的客户端都会受其影响。应注意启用该功能后，安全性会有一定下降</p>
+]]></content>
+    
+    <summary type="html">
+    
+      &lt;h2 id=&quot;问题描述&quot;&gt;&lt;a href=&quot;#问题描述&quot; class=&quot;headerlink&quot; title=&quot;问题描述&quot;&gt;&lt;/a&gt;问题描述&lt;/h2&gt;&lt;p&gt;用SSH过程连接电脑时，经常遇到长时间不操作而被服务器踢出的情况，常见的提示如：&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;Write 
+    
+    </summary>
+    
+      <category term="运维积累" scheme="http://www.bigdatas.top/categories/%E8%BF%90%E7%BB%B4%E7%A7%AF%E7%B4%AF/"/>
+    
+    
+      <category term="ssh" scheme="http://www.bigdatas.top/tags/ssh/"/>
+    
+      <category term="运维" scheme="http://www.bigdatas.top/tags/%E8%BF%90%E7%BB%B4/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>架构学习之HAProxy</title>
+    <link href="http://www.bigdatas.top/2017/03/10/HAProxy_with_MySQL/"/>
+    <id>http://www.bigdatas.top/2017/03/10/HAProxy_with_MySQL/</id>
+    <published>2017-03-09T21:54:41.000Z</published>
+    <updated>2017-03-09T22:16:20.483Z</updated>
+    
+    <content type="html"><![CDATA[<h2 id="haproxy-简介"><a href="#HAProxy-简介" class="headerlink" title="HAProxy 简介"></a>HAProxy 简介</h2><p>HAProxy是一个使用c语言编写的自由及开放源代码的软件，提供高可用性、负载均衡，以及基于TCP和HTTP的应用程序代理。</p>
+<p>HAProxy支持会话保持及七层处理，所以特别适合负载大的web站点。可以支持数以万计的并发连接。并且它的运行模式使得它可以简单安全的整合进当前的框架中，同时可以保护web服务器不被暴露到网络上。</p>
+<p>HAProxy实现了一种事件驱动，单一进程模型，此模型支持非常大的并发连接数。多进程或多行程模型内受内存限制、系统调度器限制以及无处不在的锁限制，很少能处理数千并发连接。事件驱动模型因为在有更好的资源和时间管理的用户空间（User－Space）实现所有这些任务，所以没有这些问题。此模型的弊端是，在多核系统上，这些程序通常扩展性较差。这就是为什么他们必须进行优化以使每个CPU时间片(Cycle)做更多的工作。</p>
+<p>包括GitHub、Bitbucket、Stack Overflow、Reddit、Tumblr、Twitter及亚马逊网络服务都在使用HAProxy。</p>
+<p><br></p>
+<h2 id="配置haproxy-session-亲缘性的三种方式"><a href="#配置HAProxy-Session-亲缘性的三种方式" class="headerlink" title="配置HAProxy Session 亲缘性的三种方式"></a>配置HAProxy Session 亲缘性的三种方式</h2><p>HAProxy附在均衡保持客户端和服务器Session亲缘性的三种方式：</p>
+<h3 id="1-用户ip识别"><a href="#1、用户IP识别" class="headerlink" title="1、用户IP识别"></a>1、用户IP识别</h3><p>HAProxy将用户IP经过hash计算后指定到固定的真实机器上（类似于Nginx的IP hash指令）</p>
+<p><strong>配置指令</strong> <code>balance source</code></p>
+<h3 id="2-cookie识别"><a href="#2、cookie识别" class="headerlink" title="2、cookie识别"></a>2、cookie识别</h3><p>HAProxy将WEB服务端发送给客户端的cookie中插入（或添加前缀）HAProxy定义的后端的服务器COOKIE ID。</p>
+<p><strong>配置指令例举</strong> <code>cookie SESSION_COOKIE insert indirect nocache</code></p>
+<p>用Firebug可以观察到用户的请求头的cookie里 有类似“Cookie jessionid＝xxxxxxx; SESSION_COOKIE=app1”其中SESSION_COOKIE就是HAProxy添加的内容。</p>
+<h3 id="3-session识别"><a href="#3、session识别" class="headerlink" title="3、session识别"></a>3、session识别</h3><p>HAProxy将后端服务器产生的session和后端服务器识别在HAProxy中的一张表里。客户端请求时先查询这张表。</p>
+<p><strong>配置指令例举</strong> <code>appsession JSESSIONID len 64 timeout 5h request-learn</code></p>
+<h3 id="配置示例"><a href="#配置示例" class="headerlink" title="配置示例"></a>配置示例</h3><p> <strong>#vi /usr/local/haproxy/haproxy.cfg</strong></p>
+<pre><code>backend COOKIE_srv
+mode http
+cookie SESSION_COOKIE insert indirect nocache
+server REALsrv_70 184.82.239.70:80 cookie 11 check
+inter 1500 rise 3 fall 3 weight 1
+server REALsrv_120 220.162.237.120:80 cookie 12 
+check inter 1500 rise 3 fall 3 weight 1
+backend SOURCE_srv
+mode http
+balance source
+server REALsrv_70 184.82.239.70:80 cookie 11 check 
+inter 1500 rise 3 fall 3 weight 1
+server REALsrv_120 220.162.237.120:80 cookie 12 
+check inter 1500 rise 3 fall 3 weight 1
+backend APPSESSION_srv
+mode http
+appsession JSESSIONID len 64 timeout 5h request-learn
+server REALsrv_70 184.82.239.70:80 cookie 11 check 
+inter 1500 rise 3 fall 3 weight 1
+server REALsrv_120 220.162.237.120:80 cookie 12 
+check inter 1500 rise 3 fall 3 weight 1
+</code></pre>]]></content>
+    
+    <summary type="html">
+    
+      &lt;h2 id=&quot;haproxy-简介&quot;&gt;&lt;a href=&quot;#HAProxy-简介&quot; class=&quot;headerlink&quot; title=&quot;HAProxy 简介&quot;&gt;&lt;/a&gt;HAProxy 简介&lt;/h2&gt;&lt;p&gt;HAProxy是一个使用c语言编写的自由及开放源代码的软件，提供高可用性、负
+    
+    </summary>
+    
+      <category term="系统架构" scheme="http://www.bigdatas.top/categories/%E7%B3%BB%E7%BB%9F%E6%9E%B6%E6%9E%84/"/>
+    
+    
+      <category term="HAProxy" scheme="http://www.bigdatas.top/tags/HAProxy/"/>
+    
+      <category term="MySQL" scheme="http://www.bigdatas.top/tags/MySQL/"/>
+    
+      <category term="架构学习" scheme="http://www.bigdatas.top/tags/%E6%9E%B6%E6%9E%84%E5%AD%A6%E4%B9%A0/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>读书笔记</title>
+    <link href="http://www.bigdatas.top/2016/12/10/dushubiji/"/>
+    <id>http://www.bigdatas.top/2016/12/10/dushubiji/</id>
+    <published>2016-12-10T07:39:17.000Z</published>
+    <updated>2017-02-08T10:27:46.508Z</updated>
+    
+    <content type="html"><![CDATA[<!-- ttoc -->
+<p><strong>《易中天“帝国与共和”三部曲》</strong></p>
+<pre><code>一种制度得以诞生并表现出效能，必有诸多方面的原因：而一种新的制度要代替旧的制度并获得成功，也需要经济、社会、文化、历史许多方面的前提和条件。
+</code></pre><p><strong>专访饿了么张雪峰：未长夜痛哭者，不足以语人生</strong></p>
+<p>创业总结：</p>
+<pre><code>（1）找到真正需求，而不是创造［伪需求]
+（2）先做出最小可用产品（MVP），然后根据市场反馈再定是继续迭代优化，还是迅速调整方向； 
+（3）既然很多创业者只缺一个程序员，那就对你的程序员好一点，再好一点。刚开始创业，更需要 full-stack engineer，而不是各种 big title（研发总监、架构师、CTO）；
+（4）即使 full-stack engineer，也不是真的全能选手，所以，机房/网络/服务器/存储/监控/告警/安全甚至数据库什么的，可以考虑适当交给云计算。
+</code></pre><p>架构：</p>
+<pre><code>（1）低耦合（绝大部分架构师已熟知并实践），高内聚（不少架构师有可能忽视或无视）； 
+（2）KISS； 
+（3）Design for Failure； 
+（4）Automation Everywhere； 
+（5）SOLID/Elemental Design Patterns/Design Patterns（三者类似，归为一类，后两者都有同名书出版，尤其中间的 EDP更是把软件抽象做到了极致）。
+</code></pre><p>CTO职能：</p>
+<pre><code>找到合适人才； 
+组建合理团队； 
+稳定交付产品； 
+极致经营产品； 
+如何让团队continuously enjoy woking and result？如果无法让团队始终充满激情，不可能有持续极致成果。
+</code></pre><p><strong>我自找的，开除我吧</strong></p>
+<pre><code>“不论情况有多糟糕，哪怕你知道自己要被炒鱿鱼，也要沉着冷静地想办法把问题解决。作为IT部门，如果出了问题，其他部门的人就无法工作了。把眼泪留到问题解决后再流。”
+</code></pre><p><strong>游戏改变世界：游戏化如何让现实变得更美好 (简·麦格尼格尔)</strong></p>
+<pre><code>玩游戏，就是自愿尝试克服种种不必要的障碍。
+</code></pre><p><strong>没有任何借口 2 (施伟德)</strong></p>
+<pre><code>这个世界上有理想的人远远多过没有理想的人，可真正实现理想的人却是非常少。
+
+好逸恶劳和推卸责任是人天性中的弱点，任何一个人在面对挫折和失败的时候内心都会本能地充满矛盾，并为面临的挫折和失败而深感纠结
+
+贝多芬不是空谈派，不会因为自己耳聋就为自己找借口，因此他能扼住命运的喉咙，奏响生命交响曲；霍金从来不会因为自己坐在轮椅上为自己找借口，因此他完成了连常人也无法完成的奇迹；三毛的沙漠之行不是空谈，因此她写出了《撒哈拉的故事》
+
+“丰碑无语，行胜于言”
+
+平凡的人之所以一无所成，就是因为他们太容易满足而不思进取，
+
+如果一个人自以为已经有了许多成就而止步不前，那么他的失败就在眼前了。许多人开始奋斗时十分起劲，但前途稍露光明后便自鸣得意起来，于是失败很可能立刻接踵而来
+
+灵感的每一次闪烁和启示都让它像气体一样溜掉而毫无踪迹，这比丧失机遇还要糟糕，因为它在无形中阻断了激情喷发的正常渠道。如此一来，人类将无法聚起一股坚定而快速应变的力量以对付生活的突变。
+
+如果只把工作当做一件差事，或者只将目光停留在工作本身，那么即使从事你最喜欢的工作，也依然无法持久地保持对工作的激情；如果把工作当做一项事业来看待，情况就会完全不同。 
+
+公司是我们共同的船，只要我们登上公司之船，我们的命运就和这艘船捆绑在一起了。一荣俱荣，一损俱损！这艘船就是我们共同的船，船的命运就是我们的命运，船的未来就是我们的未来
+
+一个企业需要严格的执行力，如果你想经营出色，就必须使每一项最基本的工作都尽善尽美。
+
+但只要你决定留下来，就应该与公司建立深厚的感情。把它当做自己的公司，全力投入。只要需要，即便承受再大的委屈也要服从集体。
+
+在现今这个竞争社会里，在一个企业里要么全心全意地工作，然后等待升职加薪；要么就被时代的潮流吞没，等待随时被取代和被淘汰的命运。
+
+你愿意当一个忍受较低的薪水待遇并甘心为自己的工作赴汤蹈火的小职员吗？
+
+一个员工回馈和感恩公司不一定需要大恩大德，感恩是一种态度，是一种对公司产生深厚感情的体现，以及一种对工作认真负责的体现。
+
+有关纪律在庞大的组织中的作用，军队也许是最好的例证。每一天准时开始，一切都井然有序，所有的武器随时都保持清洁。事实上，士兵所接受的第1项训练就是纪律。原因很简单，在战场上严谨的纪律是制胜的关键；在商场上纪律同样重要。
+
+成功不是追求得来的，而是被改变后的自己主动吸引而来
+
+你若不想做，会找到一个借口；你若想做，会找到一种方法.
+
+把握今日等于拥有两倍的明日。
+
+在发展过程中一个公司就如同一艘驶往成功码头的大型蒸汽船，操纵这艘船扬帆起航不仅仅需要大量的财力和物力，更需要一个敢于乘风破浪的船长和一群忠于船长、忠于这条船的水手。
+</code></pre>]]></content>
+    
+    <summary type="html">
+    
+      &lt;!-- ttoc --&gt;
+&lt;p&gt;&lt;strong&gt;《易中天“帝国与共和”三部曲》&lt;/strong&gt;&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;一种制度得以诞生并表现出效能，必有诸多方面的原因：而一种新的制度要代替旧的制度并获得成功，也需要经济、社会、文化、历史许多方面的前提和条件。
+&lt;/co
+    
+    </summary>
+    
+    
+      <category term="读书笔记" scheme="http://www.bigdatas.top/tags/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>《水浒传》读书笔记之108将出场描述</title>
+    <link href="http://www.bigdatas.top/2016/12/10/shuihu/"/>
+    <id>http://www.bigdatas.top/2016/12/10/shuihu/</id>
+    <published>2016-12-10T07:32:16.000Z</published>
+    <updated>2016-12-10T07:39:04.924Z</updated>
+    
+    <summary type="html">
+    
+    </summary>
+    
+    
+      <category term="读书笔记" scheme="http://www.bigdatas.top/tags/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/"/>
+    
+      <category term="水浒传" scheme="http://www.bigdatas.top/tags/%E6%B0%B4%E6%B5%92%E4%BC%A0/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>flask相关第三方库</title>
+    <link href="http://www.bigdatas.top/2016/11/08/flask-package/"/>
+    <id>http://www.bigdatas.top/2016/11/08/flask-package/</id>
+    <published>2016-11-08T06:39:07.000Z</published>
+    <updated>2016-11-08T08:10:32.392Z</updated>
+    
+    <content type="html"><![CDATA[<p><strong>Flask-ACL</strong><br>描述：Flask的访问控制列表</p>
+<p><strong>Flask-API</strong><br>描述：基于Flask的web浏览器RESTful API测试工具</p>
+<p><strong>Flask-APIForm</strong><br>描述：在Flask中用于RESTful APIs 的表单验证</p>
+<p><strong>Flask-APScheduler</strong><br>描述：基于Flask的定时任务框架</p>
+<p><strong>Flask-AYAH</strong><br>描述：Are You A Human 验证码机制</p>
+<p><strong>Flask-Access</strong><br>描述：Flask视图访问限制</p>
+<p><strong>Flask-Actions</strong><br>描述：Flask的常用动作，便于管理应用</p>
+<p><strong>Flask-ActiveRecord</strong><br>描述：用于对Flask-SQLAlchemy模型进行一些保护</p>
+<p><strong>Flask-Admin</strong><br>描述：仿Django-admin做的Flask应用Admin管理接口</p>
+<p><strong>Flask-Alchemy</strong><br>描述：Flask-Alchemy是使用SQLAlchemy的declarative_base模式工作，支持数据库主从分离。比如发送select请求给从库。</p>
+<p><strong>Flask-AlchemyDumps</strong><br>描述：基于SQLAlchemy和Flask-Script，通过FTP或者保存本地的数据库备份</p>
+]]></content>
+    
+    <summary type="html">
+    
+      &lt;p&gt;&lt;strong&gt;Flask-ACL&lt;/strong&gt;&lt;br&gt;描述：Flask的访问控制列表&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Flask-API&lt;/strong&gt;&lt;br&gt;描述：基于Flask的web浏览器RESTful API测试工具&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Flask-
+    
+    </summary>
+    
+    
+      <category term="flask" scheme="http://www.bigdatas.top/tags/flask/"/>
+    
+      <category term="技巧集" scheme="http://www.bigdatas.top/tags/%E6%8A%80%E5%B7%A7%E9%9B%86/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>微服务若干感想</title>
+    <link href="http://www.bigdatas.top/2016/10/31/micro-service/"/>
+    <id>http://www.bigdatas.top/2016/10/31/micro-service/</id>
+    <published>2016-10-31T09:45:56.000Z</published>
+    <updated>2016-11-10T04:13:03.949Z</updated>
+    
+    <content type="html"><![CDATA[<p>规则对于智者来说是指导，对于愚蠢来说是遵从。</p>
+<p>突破性创新，是以用户价值为中心的。</p>
+<p>快速交付是团队协作高效的根本。</p>
+]]></content>
+    
+    <summary type="html">
+    
+      &lt;p&gt;规则对于智者来说是指导，对于愚蠢来说是遵从。&lt;/p&gt;
+&lt;p&gt;突破性创新，是以用户价值为中心的。&lt;/p&gt;
+&lt;p&gt;快速交付是团队协作高效的根本。&lt;/p&gt;
+
+    
+    </summary>
+    
+    
+      <category term="技巧集" scheme="http://www.bigdatas.top/tags/%E6%8A%80%E5%B7%A7%E9%9B%86/"/>
+    
+      <category term="微服务" scheme="http://www.bigdatas.top/tags/%E5%BE%AE%E6%9C%8D%E5%8A%A1/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>sqlalchemy错误集</title>
+    <link href="http://www.bigdatas.top/2016/10/27/sqlalchemy-error/"/>
+    <id>http://www.bigdatas.top/2016/10/27/sqlalchemy-error/</id>
+    <published>2016-10-27T06:55:16.000Z</published>
+    <updated>2016-10-27T07:00:15.437Z</updated>
+    
+    <content type="html"><![CDATA[<p>1、sqlachemy中批量删除的问题</p>
+<p>db.session.query(Post).filter(Post.id.in_(ids)).delete()</p>
+<p>报错：</p>
+<pre><code>sqlalchemy.exc.InvalidRequestError
+</code></pre><a id="more"></a>
+<p>原因：</p>
+<p>删除记录时，默认会尝试删除 session 中符合条件的对象，而 in 操作估计还不支持，于是就出错了。解决办法就是删除时不进行同步，然后再让 session 里的所有实体都过期：</p>
+<p>解决办法：</p>
+<p>session.query(User).filter(User.id.in_((1, 2, 3))).delete(synchronize_session=False)<br>session.commit() # or session.expire_all()</p>
+<p>update操作也有同样的参数，如果后面立刻提交了，那么加上synchronize_session=False参数会更快</p>
+]]></content>
+    
+    <summary type="html">
+    
+      &lt;p&gt;1、sqlachemy中批量删除的问题&lt;/p&gt;
+&lt;p&gt;db.session.query(Post).filter(Post.id.in_(ids)).delete()&lt;/p&gt;
+&lt;p&gt;报错：&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;sqlalchemy.exc.InvalidRequestError
+&lt;/code&gt;&lt;/pre&gt;
+    
+    </summary>
+    
+    
+      <category term="错误集" scheme="http://www.bigdatas.top/tags/%E9%94%99%E8%AF%AF%E9%9B%86/"/>
+    
+      <category term="sqlalchemy" scheme="http://www.bigdatas.top/tags/sqlalchemy/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>ubuntu server 设置时间</title>
+    <link href="http://www.bigdatas.top/2016/10/27/linux-time/"/>
+    <id>http://www.bigdatas.top/2016/10/27/linux-time/</id>
+    <published>2016-10-27T06:40:25.000Z</published>
+    <updated>2016-10-27T06:48:57.318Z</updated>
+    
+    <content type="html"><![CDATA[<p>查看当前电脑时区：</p>
+<pre><code>data -R
+</code></pre><a id="more"></a>
+<p>设置方法：</p>
+<p>1、运行tzselect</p>
+<p>选择Asia，再选China，最后选择Beijing</p>
+<p>2、复制文件到/etc目录下</p>
+<pre><code>cp /usr/share/zoneinfo/Asia/Shanghai  /etc/localtime
+</code></pre><p>3、更新时间</p>
+<pre><code>ntpdate time.windows.com
+</code></pre>]]></content>
+    
+    <summary type="html">
+    
+      &lt;p&gt;查看当前电脑时区：&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;data -R
+&lt;/code&gt;&lt;/pre&gt;
+    
+    </summary>
+    
+    
+      <category term="技巧集" scheme="http://www.bigdatas.top/tags/%E6%8A%80%E5%B7%A7%E9%9B%86/"/>
+    
+      <category term="linux" scheme="http://www.bigdatas.top/tags/linux/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>ubuntu网络相关</title>
+    <link href="http://www.bigdatas.top/2016/10/26/linux-network-tool/"/>
+    <id>http://www.bigdatas.top/2016/10/26/linux-network-tool/</id>
+    <published>2016-10-26T01:48:48.000Z</published>
+    <updated>2016-10-27T03:51:49.811Z</updated>
+    
+    <content type="html"><![CDATA[<p>在ubuntu中已测试</p>
+<p><strong>静态路由配置</strong><br>编辑文件/etc/network/interfaces</p>
+<a id="more"></a>
+<pre><code>auto eth0
+iface eth0 inet static
+address 192.168.0.209
+netmask 255.255.255.0
+gateway 192.168.0.1
+</code></pre><p><strong>临时DNS配置</strong><br>编辑文件/etc/resolv.conf</p>
+<pre><code>nameserver 192.168.0.1
+</code></pre><p><strong>永久DNS</strong><br>编辑文件 /etc/resolvconf/resolv.conf.d/base</p>
+<pre><code>nameserver 192.168.0.1
+</code></pre>]]></content>
+    
+    <summary type="html">
+    
+      &lt;p&gt;在ubuntu中已测试&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;静态路由配置&lt;/strong&gt;&lt;br&gt;编辑文件/etc/network/interfaces&lt;/p&gt;
+    
+    </summary>
+    
+    
+      <category term="技巧集" scheme="http://www.bigdatas.top/tags/%E6%8A%80%E5%B7%A7%E9%9B%86/"/>
+    
+      <category term="linux" scheme="http://www.bigdatas.top/tags/linux/"/>
+    
+      <category term="网络" scheme="http://www.bigdatas.top/tags/%E7%BD%91%E7%BB%9C/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>《孙子兵法》</title>
+    <link href="http://www.bigdatas.top/2016/10/25/sunzibingfa/"/>
+    <id>http://www.bigdatas.top/2016/10/25/sunzibingfa/</id>
+    <published>2016-10-25T15:22:06.000Z</published>
+    <updated>2016-11-01T06:50:27.148Z</updated>
+    
+    <content type="html"><![CDATA[<p>计篇<br>孙子曰：兵者，国之大事，生死之地，存亡之道，不可不察也。</p>
+<a id="more"></a>
+<p>故经之以五事，校之以计而索其情：一曰道，二曰天，三曰地，四曰将，五曰法。道者，令民与上同意也，故可以与之死，可以与之生，而不畏危。天者，阴阳、寒暑、时制也。地者，远近，险易、广狭、死生也。将者，智、信、仁、勇、严也。法者，曲制、官道、主用也。凡此五者，将莫不闻，知之者胜，不知者不胜。故校之以计而索其情，曰：主孰有道？将孰有能？天地孰得？法令孰行？兵众孰强？士卒孰练？赏罚孰明？吾以此知胜负矣。</p>
+<p>将听吾计，用之必胜，留之；将不听吾计，用之必败，去之。</p>
+<p>计利以听，乃为之势，以佐其外。势者，因利而制权也。兵者，诡道也。故能而示之不能，用而示之不用，近而示之远，远而示之近；利而诱之，乱而取之，实而备之，强而避之，怒而挠之，卑而骄之，佚而劳之，亲而离之。攻其无备，出其不意。此兵家之胜，不可先传也。</p>
+<p>夫未战而庙算胜者，得算多也；未战而庙算不胜者，得算少也。得算胜，少算不胜，而况于无算乎！吾以此观之，胜负见矣。</p>
+<p>作战篇</p>
+<p>孙子曰：凡用兵之法，驰车千驷，革车千乘，带甲十万，千里馈粮。则内外之费，宾客之用，胶漆之材，车甲之奉，日费千金，然后十万之师举矣。</p>
+<p>其用战也胜，久则钝兵挫锐，攻城则力屈，久暴师则国用不足。夫钝兵挫锐，屈力殚货，则诸侯乘其弊而起，虽有智者不能善其后矣。故兵闻拙速，未睹巧之久也。夫兵久而国利者，未之有也。故不尽知用兵之害者，则不能尽知兵之利也。</p>
+<p>善用兵者，役不再籍，粮不三载，取用于国，因粮于敌，故军食可足也。国之贫于师者远输，远输则百姓贫；近师者贵卖，贵卖则百姓才竭，财竭则急于丘役。力屈、财殚，中原、内虚于家，百姓之费，十去其七；公家之费，破军罢马，甲胄矢弓，戟盾矛橹，丘牛大车，十去其六。故智将务食于敌，食敌一钟，当吾二十钟；萁杆一石，当吾二十石。故杀敌者，怒也；取敌之利者，货也。车战得车十乘以上，赏其先得者而更其旌旗。车杂而乘之，卒善而养之，是谓胜敌而益强。</p>
+<p>故兵贵胜，不贵久。</p>
+<p>故知兵之将，民之司命。国家安危之主也。</p>
+]]></content>
+    
+    <summary type="html">
+    
+      &lt;p&gt;计篇&lt;br&gt;孙子曰：兵者，国之大事，生死之地，存亡之道，不可不察也。&lt;/p&gt;
+    
+    </summary>
+    
+    
+      <category term="孙子兵法" scheme="http://www.bigdatas.top/tags/%E5%AD%99%E5%AD%90%E5%85%B5%E6%B3%95/"/>
+    
+      <category term="感悟" scheme="http://www.bigdatas.top/tags/%E6%84%9F%E6%82%9F/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>python中的property装饰器用法</title>
+    <link href="http://www.bigdatas.top/2016/10/24/python-property/"/>
+    <id>http://www.bigdatas.top/2016/10/24/python-property/</id>
+    <published>2016-10-24T03:38:15.000Z</published>
+    <updated>2016-10-27T03:56:28.630Z</updated>
+    
+    <content type="html"><![CDATA[<p>@property装饰器负责把一个方法变成属性调用。<br>把一个getter方法变成属性，只需要加上@property就可以了，此时@property本身又创建了另一个装饰器@score.setter，负责把一个setter方法变成属性赋值。<br><a id="more"></a></p>
+<pre><code>class Student(object):
+
+@property
+def score(self):
+    return self._score
+
+@score.setter
+def score(self, value):
+    if not isinstance(value, int):
+        raise ValueError(&quot;score must be an integer!&quot;)
+    if value &lt; 0 or value &gt; 100:
+        raise ValueError(&quot;score must between 0~100&quot;)
+    self._score = value
+</code></pre><p>使用方法：</p>
+<pre><code>&gt;&gt;&gt; s = Student()
+&gt;&gt;&gt; s.score = 30
+&gt;&gt;&gt; s.score 
+30
+&gt;&gt;&gt; s.score = 9999
+ValueError: score must between 0~100
+</code></pre><p>这就意味着如果只定义getter方法，不定义setter方法就是一个只读属性</p>
+<p>对于其它property应用使用dir(property查看)</p>
+]]></content>
+    
+    <summary type="html">
+    
+      &lt;p&gt;@property装饰器负责把一个方法变成属性调用。&lt;br&gt;把一个getter方法变成属性，只需要加上@property就可以了，此时@property本身又创建了另一个装饰器@score.setter，负责把一个setter方法变成属性赋值。&lt;br&gt;
+    
+    </summary>
+    
+    
+      <category term="技巧集" scheme="http://www.bigdatas.top/tags/%E6%8A%80%E5%B7%A7%E9%9B%86/"/>
+    
+      <category term="python" scheme="http://www.bigdatas.top/tags/python/"/>
+    
+      <category term="property" scheme="http://www.bigdatas.top/tags/property/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>flask开发过程中的用户认证</title>
+    <link href="http://www.bigdatas.top/2016/10/24/flask-user-manager/"/>
+    <id>http://www.bigdatas.top/2016/10/24/flask-user-manager/</id>
+    <published>2016-10-24T03:14:47.000Z</published>
+    <updated>2016-10-27T03:53:58.961Z</updated>
+    
+    <content type="html"><![CDATA[<p>常用的第三方包<br>Flask-Login:管理已登录用户的用户会话<br>Werkzeug: 计算密码散列值并进行核对<br>itsdangerous: 生成并核对加密安全令牌<br>Flask-Mail:发送与认证相关的电子邮件<br>Flask-Bootstrap:Html模板<br>Flask-WTF：Web表单</p>
+<a id="more"></a>
+<p><strong>如何确保数据库中的密码安全</strong></p>
+<p>若想保证数据库中用户密码的安全，关键在于不能存储密码本身，而要存储密码的散列值。</p>
+<p>计算密码散列值的函数接收密码作为输入，使用一种或多种加密算法转换密码，最终得到一个和原始密码没有关系的字符序列。</p>
+<p>核对密码时，密码散列值可替代原始密码，因为计算散列值的函数是可复现的：只要输入一样，结果就一样。</p>
+<p><strong>使用Werkzeug实现密码散列</strong></p>
+<p>generate_password_hash(password, method=pbkdf2:sha1, salt_length=8)<br>以字符串形式输出密码的散列值。method和salt_length的默认值就能满足大多数需求。</p>
+<p>check_password_hash(hash, password)<br>比对密码散列值与用户输入的密码。返回值为True表明密码正确</p>
+<pre><code>from werkzeug.security import generate_password_hash, check_password_hash
+
+class User(db.Model):
+    #。。。
+    password_hash = db.Column(db.String(128))
+
+    @property
+    def password(self):
+        raise AttributeError(&apos;password is not a readable attribute&apos;)
+
+    @password.setter
+    def password(self, password):
+        self.password_hash = generate_password_hash(password)
+
+    def verify_password(self, password):
+        return check_password_hash(self.password_hash, password)
+</code></pre><p><strong>使用Flask-login认证用户</strong><br>flask-login 是专门用来管理用户认证系统中的认证状态，且不依赖特定的认证机制。</p>
+<p>如果想使用flask-login, User模型必须实现几个方法，如下：<br>is_authenticated():    如果用户已经登录，必须返回True,否则返回False<br>is_active():        如果允许用户登录，必须返回true，否则返回false，如果要禁用账户，可以返回false<br>is_anonymous()        对普通用户必须返回False<br>get_id()        必须返回用户的唯一标识符，使用Unicode编码字符串</p>
+<p>也可以使用flask-login中的UserMixin类，该类包含了这些方法的默认实现，且能满足大多数雪球。</p>
+<pre><code>from flask.ext.login import UserMixin
+
+class User(UserMixin, db.Model):
+    __tablename__ = u&apos;users&apos;
+    email = db.Column(db.String(64), unique=True, index=True)
+</code></pre><p>Flask-login在程序的工厂函数中初始化：</p>
+<pre><code>from flask.ext.login import LoginManager
+
+login_manager = LoginManager()
+login_manager.session_protection = &apos;strong&apos;
+login_manager.login_view = &apos;auth.login&apos;
+
+def create_app(config_name):
+    login_manager.init_app(app)
+</code></pre><p>LoginManager对象的session_protection属性可以设为None， ‘basic’或’strong’，以提供不同等级的安全等级防止用户会话遭修改。设为’strong’时，Flask-Login会记录客户端IP地址和浏览器的用户代理信息，如果发现异动就登出用户。login_view属性设置登录页面的端点。</p>
+<p>最后，flask-login要求程序实现一个回调函数，使用指定的标识符加载用户。<br>app/models.py:    加载用户的回调函数</p>
+<pre><code>from . import login_manager
+
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
+</code></pre><p>加载用户的回调函数接收以Unicode字符串形式表示的用户标识符。如果能找到用户，这个函数必须返回用户对象；否则应该返回None。</p>
+<p>未完待续</p>
+]]></content>
+    
+    <summary type="html">
+    
+      &lt;p&gt;常用的第三方包&lt;br&gt;Flask-Login:管理已登录用户的用户会话&lt;br&gt;Werkzeug: 计算密码散列值并进行核对&lt;br&gt;itsdangerous: 生成并核对加密安全令牌&lt;br&gt;Flask-Mail:发送与认证相关的电子邮件&lt;br&gt;Flask-Bootstrap:Html模板&lt;br&gt;Flask-WTF：Web表单&lt;/p&gt;
+    
+    </summary>
+    
+    
+      <category term="flask" scheme="http://www.bigdatas.top/tags/flask/"/>
+    
+      <category term="技巧集" scheme="http://www.bigdatas.top/tags/%E6%8A%80%E5%B7%A7%E9%9B%86/"/>
+    
+      <category term="用户认证" scheme="http://www.bigdatas.top/tags/%E7%94%A8%E6%88%B7%E8%AE%A4%E8%AF%81/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>linux命令使用技巧</title>
+    <link href="http://www.bigdatas.top/2016/10/23/linux-command-wget/"/>
+    <id>http://www.bigdatas.top/2016/10/23/linux-command-wget/</id>
+    <published>2016-10-23T02:58:32.000Z</published>
+    <updated>2016-11-02T10:25:46.959Z</updated>
+    
+    <content type="html"><![CDATA[<p><strong>代理模式</strong></p>
+<p>有时候需要下载国外插件，不得不使用代理模式</p>
+<pre><code>wget -e &quot;http_proxy=192.168.0.209:8080&quot; www.google.com
+</code></pre><a id="more"></a>
+<p>或者使用环境变量</p>
+<pre><code>http_proxy = &quot;http://username:password@192.168.0.209:8080&quot;
+export http_proxy
+</code></pre><p>curl 使用代理</p>
+<pre><code>curl -x 192.168.0.209:8080 http://www.baidu.com
+</code></pre><p>检查nginx配置文件是否正确</p>
+<pre><code>nginx -t -c nginx.conf
+</code></pre>]]></content>
+    
+    <summary type="html">
+    
+      &lt;p&gt;&lt;strong&gt;代理模式&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;有时候需要下载国外插件，不得不使用代理模式&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;wget -e &amp;quot;http_proxy=192.168.0.209:8080&amp;quot; www.google.com
+&lt;/code&gt;&lt;/pre&gt;
+    
+    </summary>
+    
+    
+      <category term="技巧集" scheme="http://www.bigdatas.top/tags/%E6%8A%80%E5%B7%A7%E9%9B%86/"/>
+    
+      <category term="linux命令" scheme="http://www.bigdatas.top/tags/linux%E5%91%BD%E4%BB%A4/"/>
+    
+      <category term="wget" scheme="http://www.bigdatas.top/tags/wget/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>代理服务器项目摘要</title>
+    <link href="http://www.bigdatas.top/2016/10/21/proxy-list/"/>
+    <id>http://www.bigdatas.top/2016/10/21/proxy-list/</id>
+    <published>2016-10-21T09:13:35.000Z</published>
+    <updated>2016-10-27T03:55:51.598Z</updated>
+    
+    <content type="html"><![CDATA[<p>网站设计：<br>1、显示代理ip地址，地域，测试速度<br>2、设置代理ip pool<br><a id="more"></a></p>
+<p><a href="https://proxy.peuland.com/proxy_list_by_category.htm#" target="_blank" rel="external">https://proxy.peuland.com/proxy_list_by_category.htm#</a></p>
+<p><a href="http://proxy.mimvp.com/free.php" target="_blank" rel="external">http://proxy.mimvp.com/free.php</a></p>
+<p><a href="http://ip.izmoney.com/" target="_blank" rel="external">http://ip.izmoney.com/</a></p>
+<p><a href="http://www.kuaidaili.com/" target="_blank" rel="external">http://www.kuaidaili.com/</a></p>
+<p><a href="http://www.goubanjia.com/" target="_blank" rel="external">http://www.goubanjia.com/</a></p>
+<p><a href="http://www.xicidaili.com" target="_blank" rel="external">http://www.xicidaili.com</a></p>
+<p><a href="http://ip84.com/" target="_blank" rel="external">http://ip84.com/</a></p>
+<p><a href="http://www.mimiip.com/gngao/" target="_blank" rel="external">http://www.mimiip.com/gngao/</a></p>
+<p>已实现<br><a href="http://www.ip-adress.com/proxy_list/?k=time&amp;d=desc" target="_blank" rel="external">http://www.ip-adress.com/proxy_list/?k=time&amp;d=desc</a><br><a href="http://www.cybersyndrome.net/plr.htm" target="_blank" rel="external">http://www.cybersyndrome.net/plr.htm</a><br><a href="http://www.cybersyndrome.net/pla.html" target="_blank" rel="external">http://www.cybersyndrome.net/pla.html</a><br><a href="http://proxy.ipcn.org/proxylist.html" target="_blank" rel="external">http://proxy.ipcn.org/proxylist.html</a><br><a href="http://proxy.ipcn.org/proxylist2.html" target="_blank" rel="external">http://proxy.ipcn.org/proxylist2.html</a><br><a href="http://www.proxy360.cn/Region/China" target="_blank" rel="external">http://www.proxy360.cn/Region/China</a><br><a href="http://www.youdaili.net/Daili/guonei/" target="_blank" rel="external">http://www.youdaili.net/Daili/guonei/</a><br><a href="http://cn-proxy.com/" target="_blank" rel="external">http://cn-proxy.com/</a><br><a href="http://lab.magicvox.net/proxy/" target="_blank" rel="external">http://lab.magicvox.net/proxy/</a><br><a href="http://free-proxy-list.net/uk-proxy.html" target="_blank" rel="external">http://free-proxy-list.net/uk-proxy.html</a><br><a href="http://www.us-proxy.org/" target="_blank" rel="external">http://www.us-proxy.org/</a><br><a href="http://free-proxy-list.net/anonymous-proxy.html" target="_blank" rel="external">http://free-proxy-list.net/anonymous-proxy.html</a><br><a href="http://www.google-proxy.net" target="_blank" rel="external">http://www.google-proxy.net</a><br><a href="https://proxy-list.org/english/index.php?p=1" target="_blank" rel="external">https://proxy-list.org/english/index.php?p=1</a><br><a href="http://www.proxynova.com/proxy-server-list/country-ae" target="_blank" rel="external">http://www.proxynova.com/proxy-server-list/country-ae</a><br><a href="http://proxies.org/" target="_blank" rel="external">http://proxies.org/</a><br><a href="https://www.hide-my-ip.com/proxylist.shtml" target="_blank" rel="external">https://www.hide-my-ip.com/proxylist.shtml</a><br><a href="http://ipaddress.com/proxy-list/" target="_blank" rel="external">http://ipaddress.com/proxy-list/</a></p>
+]]></content>
+    
+    <summary type="html">
+    
+      &lt;p&gt;网站设计：&lt;br&gt;1、显示代理ip地址，地域，测试速度&lt;br&gt;2、设置代理ip pool&lt;br&gt;
+    
+    </summary>
+    
+    
+      <category term="代理" scheme="http://www.bigdatas.top/tags/%E4%BB%A3%E7%90%86/"/>
+    
+      <category term="项目" scheme="http://www.bigdatas.top/tags/%E9%A1%B9%E7%9B%AE/"/>
+    
+      <category term="python" scheme="http://www.bigdatas.top/tags/python/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>hexo-seo</title>
+    <link href="http://www.bigdatas.top/2016/10/21/hexo-seo/"/>
+    <id>http://www.bigdatas.top/2016/10/21/hexo-seo/</id>
+    <published>2016-10-20T18:56:34.000Z</published>
+    <updated>2016-10-20T18:56:34.525Z</updated>
+    
+    <summary type="html">
+    
+    </summary>
+    
+    
+  </entry>
+  
+  <entry>
+    <title>mysql远程登录问题</title>
+    <link href="http://www.bigdatas.top/2016/10/20/mysql-errors/"/>
+    <id>http://www.bigdatas.top/2016/10/20/mysql-errors/</id>
+    <published>2016-10-20T12:27:48.000Z</published>
+    <updated>2016-10-27T03:55:28.466Z</updated>
+    
+    <content type="html"><![CDATA[<p>root远程登录被拒绝<br>解决方法1：<br>1、使用命令进入mysql终端</p>
+<pre><code>mysql -u root -p
+</code></pre><a id="more"></a>
+<p>2、使用一下命令</p>
+<pre><code>mysql&gt; use mysql;
+mysql&gt; select host,user form user; (查看用户权限情况)
+mysql&gt; Grant all privileges on *.* to &apos;root&apos;@&apos;%&apos; identified by ‘password’with grant option;
+mysql&gt; flush privileges; (刷新权限)
+</code></pre>]]></content>
+    
+    <summary type="html">
+    
+      &lt;p&gt;root远程登录被拒绝&lt;br&gt;解决方法1：&lt;br&gt;1、使用命令进入mysql终端&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;mysql -u root -p
+&lt;/code&gt;&lt;/pre&gt;
+    
+    </summary>
+    
+    
+      <category term="mysql" scheme="http://www.bigdatas.top/tags/mysql/"/>
+    
+      <category term="远程登录" scheme="http://www.bigdatas.top/tags/%E8%BF%9C%E7%A8%8B%E7%99%BB%E5%BD%95/"/>
+    
+      <category term="问题集" scheme="http://www.bigdatas.top/tags/%E9%97%AE%E9%A2%98%E9%9B%86/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>hexo技术</title>
+    <link href="http://www.bigdatas.top/2016/10/20/hexo-tech/"/>
+    <id>http://www.bigdatas.top/2016/10/20/hexo-tech/</id>
+    <published>2016-10-20T12:25:35.000Z</published>
+    <updated>2016-10-27T03:54:46.657Z</updated>
+    
+    <content type="html"><![CDATA[<p>1、<strong>Tag</strong>标签使用方法</p>
+<pre><code>tags:
+- 123
+- 456
+</code></pre><p>注意有空格<br><a id="more"></a></p>
+]]></content>
+    
+    <summary type="html">
+    
+      &lt;p&gt;1、&lt;strong&gt;Tag&lt;/strong&gt;标签使用方法&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;tags:
+- 123
+- 456
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;注意有空格&lt;br&gt;
+    
+    </summary>
+    
+    
+      <category term="技巧集" scheme="http://www.bigdatas.top/tags/%E6%8A%80%E5%B7%A7%E9%9B%86/"/>
+    
+      <category term="hexo" scheme="http://www.bigdatas.top/tags/hexo/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>python-data-framework</title>
+    <link href="http://www.bigdatas.top/2016/10/20/python-data-framework/"/>
+    <id>http://www.bigdatas.top/2016/10/20/python-data-framework/</id>
+    <published>2016-10-20T12:17:40.000Z</published>
+    <updated>2016-10-27T03:56:14.934Z</updated>
+    
+    <content type="html"><![CDATA[<p>1、<strong>Bubbles</strong></p>
+<p>Bublles是一个python的数据处理框架</p>
+<a id="more"></a>
+<p>2、<strong>pygrametl</strong></p>
+<p>pygrametl，使用python实现的ETL工具框架</p>
+<p>3、<strong>petl</strong></p>
+<p>petl是一个纯python编写的ETL工具</p>
+]]></content>
+    
+    <summary type="html">
+    
+      &lt;p&gt;1、&lt;strong&gt;Bubbles&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;Bublles是一个python的数据处理框架&lt;/p&gt;
+    
+    </summary>
+    
+    
+      <category term="python" scheme="http://www.bigdatas.top/tags/python/"/>
+    
+      <category term="data science" scheme="http://www.bigdatas.top/tags/data-science/"/>
+    
+      <category term="视野" scheme="http://www.bigdatas.top/tags/%E8%A7%86%E9%87%8E/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>flask-views-decorator</title>
+    <link href="http://www.bigdatas.top/2016/10/20/flask-views-decorator/"/>
+    <id>http://www.bigdatas.top/2016/10/20/flask-views-decorator/</id>
+    <published>2016-10-20T10:54:41.000Z</published>
+    <updated>2016-10-27T03:54:12.305Z</updated>
+    
+    <content type="html"><![CDATA[<h2 id="flask中视图装饰器的应用"><a href="#Flask中视图装饰器的应用" class="headerlink" title="Flask中视图装饰器的应用"></a>Flask中视图装饰器的应用</h2><h3 id="1-用于过滤未登录用户"><a href="#1、用于过滤未登录用户" class="headerlink" title="1、用于过滤未登录用户"></a>1、用于过滤未登录用户</h3><a id="more"></a>
+<pre><code>from functools import wraps
+from flask import g, request, redirect, url_for
+
+def login_required(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            if g.user is None:
+                    return redirect(url_for(&apos;login&apos;, next=request.url))
+            return f(*args, **kwargs)
+
+    return decorated_function
+
+
+#注意route装饰器应该在最外层
+@app.route(&apos;/secret_page&apos;)
+@login_required
+def secret_page():
+        pass
+</code></pre><h3 id="2-用于缓存装饰器缓存一些"><a href="#2、用于缓存装饰器，缓存一些" class="headerlink" title="2、用于缓存装饰器，缓存一些"></a>2、用于缓存装饰器，缓存一些</h3>]]></content>
+    
+    <summary type="html">
+    
+      &lt;h2 id=&quot;Flask中视图装饰器的应用&quot;&gt;&lt;a href=&quot;#Flask中视图装饰器的应用&quot; class=&quot;headerlink&quot; title=&quot;Flask中视图装饰器的应用&quot;&gt;&lt;/a&gt;Flask中视图装饰器的应用&lt;/h2&gt;&lt;h3 id=&quot;1、用于过滤未登录用户&quot;&gt;&lt;a href=&quot;#1、用于过滤未登录用户&quot; class=&quot;headerlink&quot; title=&quot;1、用于过滤未登录用户&quot;&gt;&lt;/a&gt;1、用于过滤未登录用户&lt;/h3&gt;
+    
+    </summary>
+    
+    
+      <category term="flask" scheme="http://www.bigdatas.top/tags/flask/"/>
+    
+      <category term="decorator" scheme="http://www.bigdatas.top/tags/decorator/"/>
+    
+  </entry>
+  
+</feed>
