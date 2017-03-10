@@ -2,12 +2,9 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="84d944f3-d79c-48ec-8a65-d74f557ea100" name="Default" comment="">
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/source/_posts/haproxy_mysql_server.md" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/public/uploads/haproxy_mysql_0.png" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/public/tags/MySQL/index.html" afterPath="$PROJECT_DIR$/public/tags/MySQL/index.html" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/public/tags/Sqlalchemy/index.html" afterPath="$PROJECT_DIR$/public/tags/Sqlalchemy/index.html" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/source/_posts/mysql_cluster.md" afterPath="$PROJECT_DIR$/source/_posts/mysql_cluster.md" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/source/_posts/HAProxy_with_MySQL.md" afterPath="$PROJECT_DIR$/source/_posts/HAProxy.md" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -39,8 +36,8 @@
         <entry file="file://$PROJECT_DIR$/source/_posts/haproxy_mysql_server.md">
           <provider selected="true" editor-type-id="split-provider[text-editor;MarkdownPreviewEditor]">
             <state split_layout="SPLIT">
-              <first_editor relative-caret-position="627">
-                <caret line="96" column="0" lean-forward="true" selection-start-line="96" selection-start-column="0" selection-end-line="96" selection-end-column="0" />
+              <first_editor relative-caret-position="795">
+                <caret line="96" column="0" lean-forward="false" selection-start-line="96" selection-start-column="0" selection-end-line="96" selection-end-column="0" />
                 <folding />
               </first_editor>
               <second_editor />
@@ -680,8 +677,8 @@
     <entry file="file://$PROJECT_DIR$/source/_posts/haproxy_mysql_server.md">
       <provider selected="true" editor-type-id="split-provider[text-editor;MarkdownPreviewEditor]">
         <state split_layout="SPLIT">
-          <first_editor relative-caret-position="627">
-            <caret line="96" column="0" lean-forward="true" selection-start-line="96" selection-start-column="0" selection-end-line="96" selection-end-column="0" />
+          <first_editor relative-caret-position="795">
+            <caret line="96" column="0" lean-forward="false" selection-start-line="96" selection-start-column="0" selection-end-line="96" selection-end-column="0" />
             <folding />
           </first_editor>
           <second_editor />
