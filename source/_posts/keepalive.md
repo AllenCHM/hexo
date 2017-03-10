@@ -36,6 +36,8 @@ VRRP(虚拟路由冗余协议 Virtual Router Redundancy Protocol，简称VRRP)�
 泛应用在边缘网络中，它的设计目标是支持特定情况下IP数据流量失败转移不会引起混乱，允许主机使用单路
 由器，以及及时在实际第一跳路由器使用失败的情形下仍能够维护路由器间的连通性。
 
+类似的协议还有cisco的HSRP(热备份路由器协议 Hot Standby Router Protocol)
+
 ### VRRP工作机制
 
 &emsp;&emsp;     在一个VRRP虚拟路由器中,有多台物理的VRRP路由器,但是这多台的物理的机器并不能同时工作,而是由一
