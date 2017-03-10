@@ -12,9 +12,9 @@ categories: 系统架构
 
 ### 复制概述
 
-  Mysql内建的复制功能是构建大型，高性能应用程序的基础。将Mysql的数据分布到多个系统上去，这种分布的机制，是通过将Mysql的某一台主机的数据复制到其它主机（slaves）上，并重新执行一遍来实现的。复制过程中一个服务器充当主服务器，而一个或多个其它服务器充当从服务器。主服务器将更新写入二进制日志文件，并维护文件的一个索引以跟踪日志循环。这些日志可以记录发送到从服务器的更新。当一个从服务器连接主服务器时，它通知主服务器从服务器在日志中读取的最后一次成功更新的位置。从服务器接收从那时起发生的任何更新，然后封锁并等待主服务器通知新的更新。
+&emsp;&emsp;Mysql内建的复制功能是构建大型，高性能应用程序的基础。将Mysql的数据分布到多个系统上去，这种分布的机制，是通过将Mysql的某一台主机的数据复制到其它主机（slaves）上，并重新执行一遍来实现的。复制过程中一个服务器充当主服务器，而一个或多个其它服务器充当从服务器。主服务器将更新写入二进制日志文件，并维护文件的一个索引以跟踪日志循环。这些日志可以记录发送到从服务器的更新。当一个从服务器连接主服务器时，它通知主服务器从服务器在日志中读取的最后一次成功更新的位置。从服务器接收从那时起发生的任何更新，然后封锁并等待主服务器通知新的更新。
 
-请注意当你进行复制时，所有对复制中的表的更新必须在主服务器上进行。否则，你必须要小心，以避免用户对主服务器上的表进行的更新与对从服务器上的表所进行的更新之间的冲突。
+&emsp;&emsp;请注意当你进行复制时，所有对复制中的表的更新必须在主服务器上进行。否则，你必须要小心，以避免用户对主服务器上的表进行的更新与对从服务器上的表所进行的更新之间的冲突。
 
 ### mysql支持的复制类型
 
@@ -50,13 +50,13 @@ MySQL复制技术有以下一些特点：
 
 ![MySQL 主从复制过程](/uploads/mysql_cluster_0.gif)
 
-该过程的第一部分就是master记录二进制日志。在每个事务更新数据完成之前，master在二日志记录这些改变。MySQL将事务串行的写入二进制日志，即使事务中的语句都是交叉执行的。在事件写入二进制日志完成后，master通知存储引擎提交事务。
+&emsp;&emsp;该过程的第一部分就是master记录二进制日志。在每个事务更新数据完成之前，master在二日志记录这些改变。MySQL将事务串行的写入二进制日志，即使事务中的语句都是交叉执行的。在事件写入二进制日志完成后，master通知存储引擎提交事务。
 
-下一步就是slave将master的binary log拷贝到它自己的中继日志。首先，slave开始一个工作线程——I/O线程。I/O线程在master上打开一个普通的连接，然后开始binlog dump process。Binlog dump process从master的二进制日志中读取事件，如果已经跟上master，它会睡眠并等待master产生新的事件。I/O线程将这些事件写入中继日志。
+&emsp;&emsp;下一步就是slave将master的binary log拷贝到它自己的中继日志。首先，slave开始一个工作线程——I/O线程。I/O线程在master上打开一个普通的连接，然后开始binlog dump process。Binlog dump process从master的二进制日志中读取事件，如果已经跟上master，它会睡眠并等待master产生新的事件。I/O线程将这些事件写入中继日志。
 
-SQL slave thread（SQL从线程）处理该过程的最后一步。SQL线程从中继日志读取事件，并重放其中的事件而更新slave的数据，使其与master中的数据一致。只要该线程与I/O线程保持一致，中继日志通常会位于OS的缓存中，所以中继日志的开销很小。
+&emsp;&emsp;SQL slave thread（SQL从线程）处理该过程的最后一步。SQL线程从中继日志读取事件，并重放其中的事件而更新slave的数据，使其与master中的数据一致。只要该线程与I/O线程保持一致，中继日志通常会位于OS的缓存中，所以中继日志的开销很小。
 
-此外，在master中也有一个工作线程：和其它MySQL的连接一样，slave在master中打开一个连接也会使得master开始一个线程。复制过程有一个很重要的限制——复制在slave上是串行化的，也就是说master上的并行更新操作不能在slave上并行操作。
+&emsp;&emsp;此外，在master中也有一个工作线程：和其它MySQL的连接一样，slave在master中打开一个连接也会使得master开始一个线程。复制过程有一个很重要的限制——复制在slave上是串行化的，也就是说master上的并行更新操作不能在slave上并行操作。
 
 
 
@@ -160,13 +160,13 @@ ok，以上内容会写入，master.info文件中
 
 以上是主从同步的全部过程。
 
-可在主库中创建或更新数据库或表，在从库中查看是否有变化，以达到测试到目的。
+&emsp;&emsp;可在主库中创建或更新数据库或表，在从库中查看是否有变化，以达到测试到目的。
 
 ### 添加新Slave服务器
 
-假如master已经运行很久了，想对新安装的slave进行数据同步，甚至它没有master的数据。
+&emsp;&emsp;假如master已经运行很久了，想对新安装的slave进行数据同步，甚至它没有master的数据。
 
-此时，有几种方法可以使slave从另一个服务开始，例如，从master拷贝数据，从另一个slave克隆，从最近的备份开始一个slave。Slave与master同步时，需要三样东西：
+&emsp;&emsp;此时，有几种方法可以使slave从另一个服务开始，例如，从master拷贝数据，从另一个slave克隆，从最近的备份开始一个slave。Slave与master同步时，需要三样东西：
 
 &emsp;&emsp;(1)master的某个时刻的数据快照；
 
@@ -184,13 +184,13 @@ ok，以上内容会写入，master.info文件中
 
 &emsp;&emsp;&emsp;&emsp;<1>**锁表**：如果你还没有锁表，你应该对表加锁，防止其它连接修改数据库，否则，你得到的数据可以是不一致的。如下：
 ```
-&emsp;&emsp;&emsp;&emsp;mysql> FLUSH TABLES WITH READ LOCK;
+                        mysql> FLUSH TABLES WITH READ LOCK;
 ```
-&emsp;&emsp;&emsp;&emsp;<2>*在另一个连接用mysqldump创建一个你想进行复制的数据库的转储*：
+&emsp;&emsp;&emsp;&emsp;<2>**mysqldump**：在另一个连接用mysqldump创建一个你想进行复制的数据库的转储：
 ```
-&emsp;&emsp;&emsp;&emsp;shell> mysqldump --all-databases --lock-all-tables >dbdump.db
+                        shell> mysqldump --all-databases --lock-all-tables >dbdump.db
 ```
 &emsp;&emsp;&emsp;&emsp;<3>**对表释放锁**。
 ```
-&emsp;&emsp;&emsp;&emsp;mysql> UNLOCK TABLES;
+                        mysql> UNLOCK TABLES;
 ```
