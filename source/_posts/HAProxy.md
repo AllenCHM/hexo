@@ -5,7 +5,7 @@ tags:
 - HAProxy
 - MySQL
 - 架构学习
-categories: 系统架构
+categories: 架构学习
 ---
 
 

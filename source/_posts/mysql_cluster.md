@@ -4,7 +4,7 @@ date: 2017-03-10 09:54:41
 tags:
 - MySQL
 - 架构学习
-categories: 系统架构
+categories: 架构学习
 ---
 
 
