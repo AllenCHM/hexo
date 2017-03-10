@@ -31,12 +31,12 @@ categories: 架构学习
 解决静态路由单点故障问题,VRRP通过竞选(election)协议来动态的将路由任务交给LAN中虚拟路由器中的某台
 VRRP路由器
 
-VRRP(虚拟路由冗余协议 Virtual Router Redundancy Protocol，简称VRRP)是由IETF提出的解决
+&emsp;&emsp;    VRRP(虚拟路由冗余协议 Virtual Router Redundancy Protocol，简称VRRP)是由IETF提出的解决
 局域网中配置静态网关出现单点失效现象的路由协议，1998年已推出正式的RFC2338协议标准。VRRP广
 泛应用在边缘网络中，它的设计目标是支持特定情况下IP数据流量失败转移不会引起混乱，允许主机使用单路
 由器，以及及时在实际第一跳路由器使用失败的情形下仍能够维护路由器间的连通性。
 
-类似的协议还有cisco的HSRP(热备份路由器协议 Hot Standby Router Protocol)
+&emsp;&emsp;    类似的协议还有cisco的HSRP(热备份路由器协议 Hot Standby Router Protocol)
 
 ### VRRP工作机制
 
