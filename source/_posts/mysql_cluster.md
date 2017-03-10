@@ -12,9 +12,9 @@ categories: 系统架构
 
 ### MySQL主从同步搭建
 
-#### 主库设置：
+#### 主库设置
 
-IP：192.168.18.204
+IP：192.168.0.33
 
 编辑/etc/my.cnf 文件打开log-bin
 
@@ -42,9 +42,9 @@ IP：192.168.18.204
 
 授权可同步用户，登录mysql操作：
 
-    [root@mysql-master-w ~]# grant replication slave on *.* to 'rep'@'192.168.18.%' identified by '123456';
+    [root@mysql-master-w ~]# grant replication slave on *.* to 'rep'@'192.168.0.%' identified by '123456';
 
-用户rep，在192.168.18.0/24的所有计算机，密码是123456
+用户rep，在192.168.0.0/24的所有计算机，密码是123456
 
     select user,host from mysql.user;##查看用户,确保上述添加授权用户正确。
 
@@ -72,9 +72,9 @@ IP：192.168.18.204
 
 
 
-#### 从库：
+#### 从库
 
-服务器ip：192.168.18.205
+服务器ip：192.168.0.34
 
 修改/etc/my.cnf中的server-id=2，切忌不能与主库中的id相同。
 
@@ -87,14 +87,13 @@ IP：192.168.18.204
 将以下内容在从库中执行：
 
     CHANGE MASTER TO
-    MASTER_HOST='192.168.18.204',
+    MASTER_HOST='192.168.0.33',
     MASTER_PORT=3306,
     MASTER_USER='rep',
     MASTER_PASSWORD='123456',
     MASTER_LOG_FILE='mysql-bin.000002',####此处内容，同主库show master status;
     MASTER_LOG_POS=412;##主库show master status；的Position信息
 
-###############################
 
 ok，以上内容会写入，master.info文件中
 
