@@ -161,3 +161,36 @@ ok，以上内容会写入，master.info文件中
 以上是主从同步的全部过程。
 
 可在主库中创建或更新数据库或表，在从库中查看是否有变化，以达到测试到目的。
+
+### 添加新Slave服务器
+
+假如master已经运行很久了，想对新安装的slave进行数据同步，甚至它没有master的数据。
+
+此时，有几种方法可以使slave从另一个服务开始，例如，从master拷贝数据，从另一个slave克隆，从最近的备份开始一个slave。Slave与master同步时，需要三样东西：
+
+(1)master的某个时刻的数据快照；
+
+(2)master当前的日志文件、以及生成快照时的字节偏移。这两个值可以叫做日志文件坐标(log file coordinate)，因为它们确定了一个二进制日志的位置，你可以用SHOW MASTER STATUS命令找到日志文件的坐标；
+
+(3)master的二进制日志文件。
+
+可以通过以下几中方法来克隆一个slave：
+
+(1)冷拷贝(cold copy)   停止master，将master的文件拷贝到slave；然后重启master。缺点很明显。
+
+(2)热拷贝(warm copy)  如果你仅使用MyISAM表，你可以使用mysqlhotcopy拷贝，即使服务器正在运行。
+
+(3)使用mysqldump  使用mysqldump来得到一个数据快照可分为以下几步：
+  
+  <1>锁表：如果你还没有锁表，你应该对表加锁，防止其它连接修改数据库，否则，你得到的数据可以是不一致的。如下：
+```
+     mysql> FLUSH TABLES WITH READ LOCK;
+```
+  <2>在另一个连接用mysqldump创建一个你想进行复制的数据库的转储：
+```
+        shell> mysqldump --all-databases --lock-all-tables >dbdump.db
+```
+  <3>对表释放锁。
+```
+    mysql> UNLOCK TABLES;
+```
