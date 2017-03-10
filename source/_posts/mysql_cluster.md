@@ -1,6 +1,6 @@
 ---
 title: 架构学习之MySQL主从结构
-date: 2017-03-10 05:54:41
+date: 2017-03-10 09:54:41
 tags:
 - MySQL
 - 架构学习
@@ -18,56 +18,53 @@ IP：192.168.18.204
 
 编辑/etc/my.cnf 文件打开log-bin
 
-vim /etc/my.cnf
 
-log-bin=/application/mysql/data/mysql.bin
+    # vim /etc/my.cnf
 
-server-id=1
+        log-bin=/application/mysql/data/mysql.bin
+        server-id=1
 
-查看：
+使用命令查看：log_bin应为on状态
 
-log_bin应为on状态
-
-[root@mysql-master-w ~]# mysql -uroot -p123456 -e "show variables like 'log_bin';"
+    [root@mysql-master-w ~]# mysql -uroot -p123456 -e "show variables like 'log_bin';"
 
 | Variable_name | Value |
 |---------------|-------|
 | log_bin | ON |
 
-[root@mysql-master-w ~]# mysql -uroot -p123456 -e "show variables like 'server_id';"
+    [root@mysql-master-w ~]# mysql -uroot -p123456 -e "show variables like 'server_id';"
 
 
 | Variable_name | Value |
 |---------------|-------|
 | server_id | 1 |
 
-[root@mysql-master-w ~]#
 
 授权可同步用户，登录mysql操作：
 
-grant replication slave on *.* to 'rep'@'192.168.18.%' identified by '123456';
+    [root@mysql-master-w ~]# grant replication slave on *.* to 'rep'@'192.168.18.%' identified by '123456';
 
-##用户rep，在192.168.18.0/24的所有计算机，密码是123456
+用户rep，在192.168.18.0/24的所有计算机，密码是123456
 
-select user,host from mysql.user;##查看用户,确保上述添加授权用户正确。
+    select user,host from mysql.user;##查看用户,确保上述添加授权用户正确。
 
 锁表：
 
-flushtables with read lock; ##登录mysql操作
+    flushtables with read lock; ##登录mysql操作
 
 导出数据：
 
+    mysqldump -uroot -poldboy123 -B-A --events|gzip>/opt/new.sql.gz
 
-
-mysqldump -uroot -poldboy123 -B-A --events|gzip>/opt/new.sql.gz
-
-将new.sql.gz推到从库服务器。
+到时候将new.sql.gz推到从库服务器。
 
 解锁：
 
-unlock tables;##mysql中操作
+    unlock tables;##mysql中操作
 
-mysql> show master status; ###记下文件名，和位置信息
+记下文件名，和位置信息
+
+    mysql> show master status;
 
 | File | Position | Binlog_Do_DB | Binlog_Ignore_DB |
 |------------------|----------|--------------|------------------|
@@ -75,7 +72,7 @@ mysql> show master status; ###记下文件名，和位置信息
 
 
 
-从库：
+#### 从库：
 
 服务器ip：192.168.18.205
 
@@ -83,25 +80,19 @@ mysql> show master status; ###记下文件名，和位置信息
 
 将主库备份数据new.sql.gz导入数据库：
 
-gzip -d new.sql.gz
+    gzip -d new.sql.gz
 
-mysql -uroot -p123456 <new.sql
+    mysql -uroot -p123456 <new.sql
 
 将以下内容在从库中执行：
 
-CHANGE MASTER TO
-
-MASTER_HOST='192.168.18.204',
-
-MASTER_PORT=3306,
-
-MASTER_USER='rep',
-
-MASTER_PASSWORD='123456',
-
-MASTER_LOG_FILE='mysql-bin.000002',####此处内容，同主库show master status;
-
-MASTER_LOG_POS=412;##主库show master status；的Position信息
+    CHANGE MASTER TO
+    MASTER_HOST='192.168.18.204',
+    MASTER_PORT=3306,
+    MASTER_USER='rep',
+    MASTER_PASSWORD='123456',
+    MASTER_LOG_FILE='mysql-bin.000002',####此处内容，同主库show master status;
+    MASTER_LOG_POS=412;##主库show master status；的Position信息
 
 ###############################
 
@@ -109,17 +100,14 @@ ok，以上内容会写入，master.info文件中
 
 在数据库中执行：
 
-slave start； ##执行同步开关
-
-show slave status\G ##查看数据库是否同步
+    slave start； ##执行同步开关
+    show slave status\G ##查看数据库是否同步
 
 如果信息中有如下，两个yes，一个0，即表示 成功。
 
-Slave_IO_Running: Yes
-
-Slave_SQL_Running:Yes
-
-Seconds_Behind_Master:0
+    Slave_IO_Running: Yes
+    Slave_SQL_Running:Yes
+    Seconds_Behind_Master:0
 
 以上是主从同步的全部过程。
 
