@@ -90,3 +90,32 @@ VIP)。客户端主机并不需要因为Master的改变而修改自己的路由�
 的VRRP的MAC地址,而不是实际网卡的MAC地址,这样路由器切换时让内网机器察觉不到;而在路由器重启时,
 不能主动发送本机网卡的实际MAC地址。如果虚拟路由器开启的ARP代理(proxy_ARP)功能,代理的ARP回应
 也回应VRRP虚拟MAC地址
+
+
+## Keepalived 原理
+
+Keepalived是模块化设计,不同模块负责不同的功能,下面是keepalived的组件
+
+![Keepalived 组件](/uploads/keepalived_0.png)
+
+在这个机构图中，处于内核的IPVS和NETLINK，其中NETLINK是提供高级路由及其他相关的网络功能，
+如果在负载均衡器上启用iptables/netfilter，将会直接影响它的性能。对于图中不同模块功能的介绍如下：
+
+* VRRP Stack 负责负载均衡器之间的失败切换FailOver。LVS中负责DR调度器组的
+
+* Checkers 负责检查调度器后端的Real server 或者 Upstream Server的健康状况。
+检查RS的状态，决定是否将其剔除
+
+* WatchDog 负责监控checkers和VRRP进程的状况
+
+* IPVS wrapper 用来发送设定的规则到内核IPVS
+
+* Netlink Reflector 用来设定VRRP的vip地址。 VIP也有‘人’管
+
+
+keepalived运行时，会启动3个进程，分别为：Core(核心进程)，Check和VRRP 
+* Core：负责主进程的启动，维护和全局配置文件的加载；
+* Check：负责健康检查
+* VRRP：用来实现VRRP协议
+
+总结：在VRRP协议的基础上实现了服务器主机的负载均衡，VRRP负责调度器之间的高可用。
