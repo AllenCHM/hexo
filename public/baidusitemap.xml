@@ -1,0 +1,586 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+
+
+    
+  <url>
+    <loc>http://www.bigdatas.top/2017/03/10/mysql_cluster/</loc>
+    <lastmod>2017-03-10T02:08:50.160Z</lastmod>
+    <data>
+        <display>
+        <title>架构学习之MySQL主从结构</title>
+        <pubTime>2017-03-10T01:54:41.000Z</pubTime>
+        
+        <tag>MySQL</tag>
+         
+        <tag>架构学习</tag>
+         
+         
+           
+             
+              <breadCrumb title="系统架构" url="http://www.bigdatas.top/categories/%E7%B3%BB%E7%BB%9F%E6%9E%B6%E6%9E%84/"/>
+          
+        </display>
+    </data>
+    </url>
+
+    
+    
+  <url>
+    <loc>http://www.bigdatas.top/2017/03/10/linux-ssh/</loc>
+    <lastmod>2017-03-09T22:34:17.987Z</lastmod>
+    <data>
+        <display>
+        <title>运维积累之Mac SSH 连接掉线</title>
+        <pubTime>2017-03-09T22:24:09.000Z</pubTime>
+        
+        <tag>ssh</tag>
+         
+        <tag>运维</tag>
+         
+         
+           
+             
+              <breadCrumb title="运维积累" url="http://www.bigdatas.top/categories/%E8%BF%90%E7%BB%B4%E7%A7%AF%E7%B4%AF/"/>
+          
+        </display>
+    </data>
+    </url>
+
+    
+  <url>
+    <loc>http://www.bigdatas.top/2017/03/10/HAProxy_with_MySQL/</loc>
+    <lastmod>2017-03-09T22:16:20.483Z</lastmod>
+    <data>
+        <display>
+        <title>架构学习之HAProxy</title>
+        <pubTime>2017-03-09T21:54:41.000Z</pubTime>
+        
+        <tag>HAProxy</tag>
+         
+        <tag>MySQL</tag>
+         
+        <tag>架构学习</tag>
+         
+         
+           
+             
+              <breadCrumb title="系统架构" url="http://www.bigdatas.top/categories/%E7%B3%BB%E7%BB%9F%E6%9E%B6%E6%9E%84/"/>
+          
+        </display>
+    </data>
+    </url>
+
+    
+  <url>
+    <loc>http://www.bigdatas.top/2016/12/10/dushubiji/</loc>
+    <lastmod>2017-02-08T10:27:46.508Z</lastmod>
+    <data>
+        <display>
+        <title>读书笔记</title>
+        <pubTime>2016-12-10T07:39:17.000Z</pubTime>
+        
+        <tag>读书笔记</tag>
+         
+         
+           
+        </display>
+    </data>
+    </url>
+
+    
+    
+    
+  <url>
+    <loc>http://www.bigdatas.top/2016/12/10/shuihu/</loc>
+    <lastmod>2016-12-10T07:39:04.924Z</lastmod>
+    <data>
+        <display>
+        <title>《水浒传》读书笔记之108将出场描述</title>
+        <pubTime>2016-12-10T07:32:16.000Z</pubTime>
+        
+        <tag>读书笔记</tag>
+         
+        <tag>水浒传</tag>
+         
+         
+           
+        </display>
+    </data>
+    </url>
+
+    
+  <url>
+    <loc>http://www.bigdatas.top/2016/10/31/micro-service/</loc>
+    <lastmod>2016-11-10T04:13:03.949Z</lastmod>
+    <data>
+        <display>
+        <title>微服务若干感想</title>
+        <pubTime>2016-10-31T09:45:56.000Z</pubTime>
+        
+        <tag>技巧集</tag>
+         
+        <tag>微服务</tag>
+         
+         
+           
+        </display>
+    </data>
+    </url>
+
+    
+  <url>
+    <loc>http://www.bigdatas.top/2016/11/08/flask-package/</loc>
+    <lastmod>2016-11-08T08:10:32.392Z</lastmod>
+    <data>
+        <display>
+        <title>flask相关第三方库</title>
+        <pubTime>2016-11-08T06:39:07.000Z</pubTime>
+        
+        <tag>flask</tag>
+         
+        <tag>技巧集</tag>
+         
+         
+           
+        </display>
+    </data>
+    </url>
+
+    
+  <url>
+    <loc>http://www.bigdatas.top/2016/10/23/linux-command-wget/</loc>
+    <lastmod>2016-11-02T10:25:46.959Z</lastmod>
+    <data>
+        <display>
+        <title>linux命令使用技巧</title>
+        <pubTime>2016-10-23T02:58:32.000Z</pubTime>
+        
+        <tag>技巧集</tag>
+         
+        <tag>linux命令</tag>
+         
+        <tag>wget</tag>
+         
+         
+           
+        </display>
+    </data>
+    </url>
+
+    
+  <url>
+    <loc>http://www.bigdatas.top/2016/10/25/sunzibingfa/</loc>
+    <lastmod>2016-11-01T06:50:27.148Z</lastmod>
+    <data>
+        <display>
+        <title>《孙子兵法》</title>
+        <pubTime>2016-10-25T15:22:06.000Z</pubTime>
+        
+        <tag>孙子兵法</tag>
+         
+        <tag>感悟</tag>
+         
+         
+           
+        </display>
+    </data>
+    </url>
+
+    
+  <url>
+    <loc>http://www.bigdatas.top/2016/10/27/sqlalchemy-error/</loc>
+    <lastmod>2016-10-27T07:00:15.437Z</lastmod>
+    <data>
+        <display>
+        <title>sqlalchemy错误集</title>
+        <pubTime>2016-10-27T06:55:16.000Z</pubTime>
+        
+        <tag>错误集</tag>
+         
+        <tag>sqlalchemy</tag>
+         
+         
+           
+        </display>
+    </data>
+    </url>
+
+    
+  <url>
+    <loc>http://www.bigdatas.top/2016/10/27/linux-time/</loc>
+    <lastmod>2016-10-27T06:48:57.318Z</lastmod>
+    <data>
+        <display>
+        <title>ubuntu server 设置时间</title>
+        <pubTime>2016-10-27T06:40:25.000Z</pubTime>
+        
+        <tag>技巧集</tag>
+         
+        <tag>linux</tag>
+         
+         
+           
+        </display>
+    </data>
+    </url>
+
+    
+  <url>
+    <loc>http://www.bigdatas.top/2016/10/14/test/</loc>
+    <lastmod>2016-10-27T03:57:35.275Z</lastmod>
+    <data>
+        <display>
+        <title>Flask-cookies使用教程</title>
+        <pubTime>2016-10-14T06:27:37.000Z</pubTime>
+        
+        <tag>Flask-cookies</tag>
+         
+        <tag>Flask技巧</tag>
+         
+         
+           
+        </display>
+    </data>
+    </url>
+
+    
+  <url>
+    <loc>http://www.bigdatas.top/2016/10/15/scrapy-webdriver/</loc>
+    <lastmod>2016-10-27T03:57:08.487Z</lastmod>
+    <data>
+        <display>
+        <title>scrapy_webdriver</title>
+        <pubTime>2016-10-15T14:07:29.000Z</pubTime>
+        
+        <tag>scrapy</tag>
+         
+        <tag>翻译</tag>
+         
+        <tag>selenium</tag>
+         
+        <tag>scrapy-webdrive</tag>
+         
+         
+           
+        </display>
+    </data>
+    </url>
+
+    
+  <url>
+    <loc>http://www.bigdatas.top/2016/10/16/scrapy-useragents/</loc>
+    <lastmod>2016-10-27T03:56:57.323Z</lastmod>
+    <data>
+        <display>
+        <title>scrapy-useragents</title>
+        <pubTime>2016-10-16T03:01:50.000Z</pubTime>
+        
+        <tag>scrapy</tag>
+         
+        <tag>翻译</tag>
+         
+        <tag>user-agent</tag>
+         
+         
+           
+        </display>
+    </data>
+    </url>
+
+    
+  <url>
+    <loc>http://www.bigdatas.top/2016/10/15/random-proxy-middleware-for-scrapy/</loc>
+    <lastmod>2016-10-27T03:56:38.858Z</lastmod>
+    <data>
+        <display>
+        <title>random proxy middleware for scrapy(scracpy的随记代理中间件)</title>
+        <pubTime>2016-10-15T14:03:35.000Z</pubTime>
+        
+        <tag>scrapy</tag>
+         
+        <tag>proxy middleware</tag>
+         
+        <tag>翻译</tag>
+         
+         
+           
+        </display>
+    </data>
+    </url>
+
+    
+  <url>
+    <loc>http://www.bigdatas.top/2016/10/24/python-property/</loc>
+    <lastmod>2016-10-27T03:56:28.630Z</lastmod>
+    <data>
+        <display>
+        <title>python中的property装饰器用法</title>
+        <pubTime>2016-10-24T03:38:15.000Z</pubTime>
+        
+        <tag>技巧集</tag>
+         
+        <tag>python</tag>
+         
+        <tag>property</tag>
+         
+         
+           
+        </display>
+    </data>
+    </url>
+
+    
+  <url>
+    <loc>http://www.bigdatas.top/2016/10/20/python-data-framework/</loc>
+    <lastmod>2016-10-27T03:56:14.934Z</lastmod>
+    <data>
+        <display>
+        <title>python-data-framework</title>
+        <pubTime>2016-10-20T12:17:40.000Z</pubTime>
+        
+        <tag>python</tag>
+         
+        <tag>data science</tag>
+         
+        <tag>视野</tag>
+         
+         
+           
+        </display>
+    </data>
+    </url>
+
+    
+  <url>
+    <loc>http://www.bigdatas.top/2016/10/19/putty-blue/</loc>
+    <lastmod>2016-10-27T03:56:01.330Z</lastmod>
+    <data>
+        <display>
+        <title>解决putty终端蓝色过深</title>
+        <pubTime>2016-10-19T10:36:14.000Z</pubTime>
+        
+        <tag>问题集</tag>
+         
+        <tag>putty</tag>
+         
+         
+           
+        </display>
+    </data>
+    </url>
+
+    
+  <url>
+    <loc>http://www.bigdatas.top/2016/10/21/proxy-list/</loc>
+    <lastmod>2016-10-27T03:55:51.598Z</lastmod>
+    <data>
+        <display>
+        <title>代理服务器项目摘要</title>
+        <pubTime>2016-10-21T09:13:35.000Z</pubTime>
+        
+        <tag>代理</tag>
+         
+        <tag>项目</tag>
+         
+        <tag>python</tag>
+         
+         
+           
+        </display>
+    </data>
+    </url>
+
+    
+  <url>
+    <loc>http://www.bigdatas.top/2016/10/19/mysql-python-error/</loc>
+    <lastmod>2016-10-27T03:55:41.894Z</lastmod>
+    <data>
+        <display>
+        <title>mysql-python安装错误</title>
+        <pubTime>2016-10-19T03:19:20.000Z</pubTime>
+        
+        <tag>错误集</tag>
+         
+        <tag>mysql-python</tag>
+         
+         
+           
+        </display>
+    </data>
+    </url>
+
+    
+  <url>
+    <loc>http://www.bigdatas.top/2016/10/20/mysql-errors/</loc>
+    <lastmod>2016-10-27T03:55:28.466Z</lastmod>
+    <data>
+        <display>
+        <title>mysql远程登录问题</title>
+        <pubTime>2016-10-20T12:27:48.000Z</pubTime>
+        
+        <tag>mysql</tag>
+         
+        <tag>远程登录</tag>
+         
+        <tag>问题集</tag>
+         
+         
+           
+        </display>
+    </data>
+    </url>
+
+    
+  <url>
+    <loc>http://www.bigdatas.top/2016/10/19/how-to-Sqlalchemy/</loc>
+    <lastmod>2016-10-27T03:55:01.837Z</lastmod>
+    <data>
+        <display>
+        <title>Sqlalchemy使用方法</title>
+        <pubTime>2016-10-19T02:37:24.000Z</pubTime>
+        
+        <tag>技巧集</tag>
+         
+        <tag>Sqlalchemy</tag>
+         
+         
+           
+        </display>
+    </data>
+    </url>
+
+    
+  <url>
+    <loc>http://www.bigdatas.top/2016/10/20/hexo-tech/</loc>
+    <lastmod>2016-10-27T03:54:46.657Z</lastmod>
+    <data>
+        <display>
+        <title>hexo技术</title>
+        <pubTime>2016-10-20T12:25:35.000Z</pubTime>
+        
+        <tag>技巧集</tag>
+         
+        <tag>hexo</tag>
+         
+         
+           
+        </display>
+    </data>
+    </url>
+
+    
+  <url>
+    <loc>http://www.bigdatas.top/2016/10/20/flask-views-decorator/</loc>
+    <lastmod>2016-10-27T03:54:12.305Z</lastmod>
+    <data>
+        <display>
+        <title>flask-views-decorator</title>
+        <pubTime>2016-10-20T10:54:41.000Z</pubTime>
+        
+        <tag>flask</tag>
+         
+        <tag>decorator</tag>
+         
+         
+           
+        </display>
+    </data>
+    </url>
+
+    
+  <url>
+    <loc>http://www.bigdatas.top/2016/10/24/flask-user-manager/</loc>
+    <lastmod>2016-10-27T03:53:58.961Z</lastmod>
+    <data>
+        <display>
+        <title>flask开发过程中的用户认证</title>
+        <pubTime>2016-10-24T03:14:47.000Z</pubTime>
+        
+        <tag>flask</tag>
+         
+        <tag>技巧集</tag>
+         
+        <tag>用户认证</tag>
+         
+         
+           
+        </display>
+    </data>
+    </url>
+
+    
+  <url>
+    <loc>http://www.bigdatas.top/2016/10/20/flask/</loc>
+    <lastmod>2016-10-27T03:53:46.005Z</lastmod>
+    <data>
+        <display>
+        <title>flask</title>
+        <pubTime>2016-10-20T07:38:41.000Z</pubTime>
+        
+        <tag>flask</tag>
+         
+        <tag>技巧集</tag>
+         
+         
+           
+        </display>
+    </data>
+    </url>
+
+    
+  <url>
+    <loc>http://www.bigdatas.top/2016/10/19/flask-error/</loc>
+    <lastmod>2016-10-27T03:53:30.900Z</lastmod>
+    <data>
+        <display>
+        <title>flask错误集合</title>
+        <pubTime>2016-10-18T16:24:09.000Z</pubTime>
+        
+        <tag>flask</tag>
+         
+        <tag>错误集</tag>
+         
+         
+           
+        </display>
+    </data>
+    </url>
+
+    
+  <url>
+    <loc>http://www.bigdatas.top/2016/10/26/linux-network-tool/</loc>
+    <lastmod>2016-10-27T03:51:49.811Z</lastmod>
+    <data>
+        <display>
+        <title>ubuntu网络相关</title>
+        <pubTime>2016-10-26T01:48:48.000Z</pubTime>
+        
+        <tag>技巧集</tag>
+         
+        <tag>linux</tag>
+         
+        <tag>网络</tag>
+         
+         
+           
+        </display>
+    </data>
+    </url>
+
+    
+  <url>
+    <loc>http://www.bigdatas.top/2016/10/21/hexo-seo/</loc>
+    <lastmod>2016-10-20T18:56:34.525Z</lastmod>
+    <data>
+        <display>
+        <title>hexo-seo</title>
+        <pubTime>2016-10-20T18:56:34.000Z</pubTime>
+        
+         
+           
+        </display>
+    </data>
+    </url>
+
+</urlset>
