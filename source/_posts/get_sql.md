@@ -9,11 +9,13 @@ categories: 数据库学习
 
 ## 数据检索
 
- **行0** 检索出来的第一行wei行0而不是行1。因此,LIMIT 1,1将检索出第二行而不是第一行
-  
+### 关于行数
+
+**行0** 检索出来的第一行wei行0而不是行1。因此,LIMIT 1,1将检索出第二行而不是第一行
+
+### 关于ORDER BY
 
 **ORDER BY** 默认排序为升序(**ASC**)(从A到Z)。使用**DESC**关键字,为降序
-
 
 检索价格在5和10之间的所有产品
 ```
@@ -22,6 +24,7 @@ FROM products
 WHERE prod_price BETWEEN 5 AND 10;
 ```
 
+### 关于NULL值
 
 NULL 无值(no value),它与字段包含0、空字符串或仅仅包含空格不同
 
@@ -32,6 +35,7 @@ FROM products
 WHERE prod_price IS NULL;
 ```
 
+### IN用法
 
 检索供应商1002和1003制造的所有产品
 ```
@@ -49,6 +53,7 @@ ORDER BY prod_name;
 
 * IN可以包含其他SELECT语句,使得能够更动态的建立WHERE子句
 
+### LIKE检索
 
 **通配符**(wildcard)用来匹配值的一部分的特殊字符
 
@@ -81,18 +86,19 @@ WHERE prod_name LIKE 'jet%';
 
 * 仔细注意通配符的位置。如果放错地方,可能不会返回想要的数据。
 
-
-'''
+```
 SELECT prod_name
 FROM products
 WHERE prod_name REGEXP '.000'
 ORDER BY prod_name;
-'''
+```
 
 
 LIKE匹配整个列。如果被匹配的文本在列值中出现,LIKE将不会找到它,相应的行也不被返回(
 除非使用通配符)。而REGEXP在列值内进行匹配,如果被匹配的文本在列值中出现,REGEXP将会找到
 它,相应的行将被返回
+
+### 正则搜索
 
 REGEXP匹配整个列值(从而起与LIKE相同的作用)可以配合^和$定位符(anchor)即可。
 
@@ -100,10 +106,6 @@ REGEXP匹配整个列值(从而起与LIKE相同的作用)可以配合^和$定位
 ```
 WHERE prod_name REGEXP BINARY 'JetPack .000'
 ```
-
-
-
-
 
 
 
@@ -116,45 +118,49 @@ WHERE prod_name REGEXP BINARY 'JetPack .000'
 
 **可伸缩性(scale)** 能够适应不断增加的工作量而不失败。设计良好的数据库或应用程序称之为可伸缩性好(scale well0)
 
-
+```
 	SELECT vend_name, prod_name, prod_price
 	FROM vendors, products
 	WHERE vendors.vend_id = products.vend_id
 	ORDER BY vend_name, prod_name;
+```
 	
 ***完全限定列名*** 在引用的列可能出现二义性，必须使用完全限定列名**（用一个点分割的表名和列名）**	
 
 
 ***笛卡尔积cartesian product*** 检索出来的行的数目是第一个表中的行数乘以第二个表中的行数
-
+```
 	例如：
 	SELECT vend_name, prod_name, prod_price
 	FROM vendors, products
 	ORDER BY vend_name, prod_name;
+```
 	
 	 
 等值联结（equijoin）,基于两个表之间的相等测试。也称为内部连接
-
+```
 	SELECT vend_name, prod_name, prod_price
 	FROM vendors INNER JOIN products
 	ON vendors.vend_id = products.vend_id;
+```
 		
 		
-多表联结
+### 多表联结
 
 显示编号为20005的订单中的物品
-	
+```
 	SELECT prod_name, vend_name, prod_price, quantity
 	FROM orderitems, products, vendors
 	WHERE products.vend_id = vendors.vend_id
 		AND orderitems.prod_id = products.prod_id
 		AND order_num = 200005;
+```
 		
 		
 返回订购产品tnt2的客户列表。
 
-子查询方式
-
+### 子查询方式
+```
 	SELECT cust_name, cust_contact
 	FROM customers
 	WHERE cust_id IN (
@@ -166,17 +172,19 @@ WHERE prod_name REGEXP BINARY 'JetPack .000'
 				WHERE prod_id = 'TNT2'	
 				)
 			);
-			  
-  
-联结查询
-
+ ```
+ 
+### 联结查询
+```
 	SELECT cust_name, cust_contact
 	FROM customers, orders, orderitems
 	WHERE customers.cust_id = orders.cust_id
 		AND orderitems.order_num = orders.order_num
 		AND prod_id = 'TNT2';
+```
 		  
-		  
+## SHOW 语句 
+```
     show databases;  -- 列出所有数据库
     show create database db_name; -- 查看数据库的DDL
     show tables;  -- 列出默认数据库的所有表
@@ -192,11 +200,10 @@ WHERE prod_name REGEXP BINARY 'JetPack .000'
     SHOW GRANTS; -- 用来显示授予用户(所有用户或特定用户)的安全权限;
     SHOW ERRORS; -- 显示服务器错误信息
     SHOW WARNINGS; -- 显示服务器警告信息
-    
+ ```
 
-## SHOW 语句 
  
-SHOW COLUMNS FROM customers
+### SHOW COLUMNS FROM customers
 
 返回中包括字段名、数据类型、是否允许NULL、键信息、默认值以及其他信息。也可以
 使用*DESCRIBE customers*查询
@@ -300,7 +307,7 @@ HAVING COUNT(*) >=2;
 |1005|2|
 
 
-分组和排序
+### 分组和排序
 
 |ORDER BY|GROUP BY|
 |---|---|
