@@ -1,10 +1,10 @@
 ---
-title: 【SQLAlchemy 1.1 文档翻译】之 概述
+title: 【SQLAlchemy 1.2 文档翻译】之 概述
 date: 2017-03-10 18:54:41
 tags:
 - SQLAlchemy
 - 文档翻译
-categories: SQLAlchemy 1.1 文档翻译
+categories: SQLAlchemy 1.2 文档翻译
 ---
 
 ## 概述
