@@ -10,3 +10,4 @@ _config.yml
 .idea/
 /public/
 !/public/uploads/
+.idea/*

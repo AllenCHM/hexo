@@ -1,11 +1,11 @@
 ---
 title: 架构学习之HAProxy + MySQL主从结构 实现读取负载均衡
-date: 2017-03-10 09:54:41
+date: 2017-03-11 04:54:41
 tags:
 - MySQL
 - HAProxy
 - 架构学习
-categories: 系统架构
+categories: 架构学习
 ---
 
 
