@@ -8,3 +8,5 @@ scaffolds/
 themes/
 _config.yml
 .idea/
+/public/
+!/public/uploads/
