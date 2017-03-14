@@ -34,3 +34,84 @@ categories: 架构学习
 2.主库后面提供服务的从库要等masterB先同步完了数据后才能去masterB上去同步数据，
 这样可能会造成一定程度的同步延时；
 
+### 实验测试
+
+MySQL 使用apt-get安装的5.7版本
+
+
+#### 修改MySQL的配置文件
+
+mysql master 1 的配置文件
+
+```
+server_id = 1
+log_bin=mysql_bin    # 打开二进制日志功能，作为主库时必须设置
+log_slave_updates    # 做为从库时，数据库的修改也会写到bin_log里
+binlog_ignore_db = mysql
+binlog_ignore_db = information_schema
+binlog_ignore_db = performance_schema
+replicate_wild_ignore_table = mysql.%
+replicate_wild_ignore_table = information_schema.%
+replicate_wild_ignore_table = performance_schema.%
+expire_logs_days=5   # 表示自动删除5天以前的binlog，可选
+```
+
+mysql master 2 的配置文件
+
+```
+server_id = 2
+log_bin=mysql_bin
+log_slave_updates
+binlog_ignore_db = mysql
+binlog_ignore_db = information_schema
+binlog_ignore_db = performance_schema
+replicate_wild_ignore_table = mysql.%
+replicate_wild_ignore_table = information_schema.%
+replicate_wild_ignore_table = performance_schema.%
+expire_logs_days=5
+```
+
+重启MySQL服务
+```
+service mysql restart
+```
+
+#### Master-Master配置
+
+##### 配置mysql master 1为主库
+```
+> reset master;(清空master的binlog，平时慎用，可选)
+> flush tables with read lock;
+> show master status;
+```
+
+##### 配置mysql master mysql master 1的从库
+```
+> stop slave;
+> CHANGE MASTER TO MASTER_HOST='192.168.0.33', MASTER_USER='root', MASTER_PASSWORD='1', MASTER_LOG_FILE='mysql-bin.000001', MASTER_LOG_POS=120;
+> start slave;
+> show slave status\G
+```
+其中MASTER_LOG_FILE和MASTER_LOG_POS的参数为上一步中查看到的结果
+
+
+#### 配置mysql master 2 为主库
+```
+> reset master;(清空master的binlog，平时慎用，可选)
+> flush tables with read lock;
+> show master status;
+```
+
+#### 配置mysql master 1 为mysql master 2的从库
+```
+> unlock tables;
+> stop slave;
+> CHANGE MASTER TO MASTER_HOST='192.168.0.36', MASTER_USER='root', MASTER_PASSWORD='1', MASTER_LOG_FILE='mysql-bin.000001', MASTER_LOG_POS=120;
+> start slave;
+> show slave status\G
+```
+
+#### 解除mysql master 2 上的表锁
+```
+> unlock tables;
+```
