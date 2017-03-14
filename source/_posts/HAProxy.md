@@ -1,5 +1,5 @@
 ---
-title: 架构学习之HAProxy
+title: 架构学习之HAProxy介绍
 date: 2017-03-10 05:54:41
 tags:
 - HAProxy
